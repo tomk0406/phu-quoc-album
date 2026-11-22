@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>富國島相簿 · 2026年11月11至15日</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7f5;
+    --surface:#ffffff;
+    --surface-2:#eef4f1;
+    --ink:#17302b;
+    --ink-2:#4a625c;
+    --ink-3:#7d938c;
+    --line:#d8e4de;
+    --teal:#0e7a6d;
+    --teal-deep:#0a5c52;
+    --teal-soft:#dff0eb;
+    --coral:#e4572e;
+    --coral-soft:#fdeee8;
+    --amber:#b97f10;
+    --amber-soft:#fdf3da;
+    --ok:#1c7a3d;
+    --shadow:0 10px 30px rgba(16,52,44,.10);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1a17;
+      --surface:#182723;
+      --surface-2:#1f332d;
+      --ink:#e8f2ee;
+      --ink-2:#b3c9c1;
+      --ink-3:#849e95;
+      --line:#2c453d;
+      --teal:#2fbfa9;
+      --teal-deep:#7fe0d0;
+      --teal-soft:#1d3d36;
+      --coral:#ff8a66;
+      --coral-soft:#3d271e;
+      --amber:#e8b84b;
+      --amber-soft:#3a3018;
+      --ok:#6fd598;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang HK","Microsoft JhengHei",sans-serif;line-height:1.6}
+  button,[role="button"],select,input{font:inherit}
+  button{min-height:44px}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 16px 56px}
+
+  /* ---------- Hero ---------- */
+  .hero{margin:0 -16px;padding:34px 20px 26px;background:var(--teal-deep);color:#eafaf5;position:relative;overflow:hidden}
+  @media (prefers-color-scheme: dark){.hero{background:#123c35}}
+  .hero::after{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;border:34px solid rgba(255,255,255,.08)}
+  .hero::before{content:"";position:absolute;right:60px;bottom:-90px;width:170px;height:170px;border-radius:50%;border:24px solid rgba(255,255,255,.06)}
+  .hero-inner{max-width:1060px;margin:0 auto;position:relative;z-index:1}
+  .hero .place{font-size:.85rem;letter-spacing:.14em;font-weight:700;opacity:.85}
+  .hero h1{font-family:"Noto Serif TC",serif;font-size:2.35rem;line-height:1.15;margin:6px 0 8px;font-weight:900}
+  .hero .dates{font-size:1rem;font-weight:500;opacity:.95}
+  .hero .sub{margin-top:6px;font-size:.92rem;opacity:.85;max-width:560px}
+  .hero-stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:8px 14px;font-size:.9rem}
+  .stat b{font-size:1.05rem}
+  .sync{display:inline-flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#7fe0a8;flex:none}
+  .dot.busy{background:#ffd166}
+  .dot.idle{background:#ffb4a2}
+
+  /* ---------- Sections ---------- */
+  section{margin-top:30px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .sec-num{font-family:"Noto Serif TC",serif;font-weight:900;color:var(--teal);font-size:1.05rem}
+  .sec-head h2{font-size:1.3rem;margin:0;font-weight:900}
+  .sec-head p{margin:0;color:var(--ink-2);font-size:.92rem}
+
+  /* ---------- Q&A ---------- */
+  .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:640px){.qa-grid{grid-template-columns:1fr}}
+  .qa{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .qa .q{display:flex;gap:10px;align-items:flex-start;font-weight:900;font-size:1.02rem;line-height:1.45}
+  .qa .badge{flex:none;width:30px;height:30px;border-radius:9px;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:900;font-size:.95rem;margin-top:1px}
+  .qa .a{margin-top:12px;color:var(--ink-2);font-size:.96rem}
+  .qa .a b{color:var(--ink)}
+  .qa .a .hl{color:var(--teal-deep);font-weight:700}
+  @media (prefers-color-scheme: dark){.qa .a .hl{color:var(--teal)}}
+
+  /* ---------- Members ---------- */
+  .member-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .member-pill{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:.9rem;font-weight:500}
+  .member-pill .crown{font-size:.78rem;background:var(--coral);color:#fff;border-radius:999px;padding:1px 8px;font-weight:700}
+
+  /* ---------- Upload ---------- */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+  .step-label{font-weight:900;font-size:.95rem;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .step-n{width:26px;height:26px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:.85rem;font-weight:900;flex:none}
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 18px;font-weight:700;cursor:pointer;font-size:.98rem;display:inline-flex;align-items:center;gap:8px;min-height:44px}
+  .chip .tag{font-size:.72rem;background:var(--coral);color:#fff;border-radius:999px;padding:1px 7px;font-weight:700}
+  .chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+  .chip[aria-pressed="true"] .tag{background:#fff;color:var(--coral)}
+  .chip:focus-visible,.btn:focus-visible,.seg button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .drop{margin-top:20px;border:2px dashed var(--line);border-radius:14px;padding:26px 16px;text-align:center;background:var(--surface-2)}
+  .drop.drag{border-color:var(--teal);background:var(--teal-soft)}
+  .drop .big{font-weight:900;font-size:1.05rem}
+  .drop .small{color:var(--ink-2);font-size:.88rem;margin-top:4px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:11px 22px;font-weight:900;cursor:pointer;font-size:1rem;min-height:48px}
+  .btn-primary{background:var(--coral);color:#fff;margin-top:14px}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-teal{background:var(--teal);color:#fff}
+  .btn-ghost{background:transparent;color:var(--teal-deep);border:1.5px solid var(--line)}
+  @media (prefers-color-scheme: dark){.btn-ghost{color:var(--teal)}}
+  .btn[disabled]{opacity:.55;cursor:not-allowed}
+  .days-note{margin-top:16px;background:var(--amber-soft);border-radius:12px;padding:12px 15px;font-size:.9rem;color:var(--ink)}
+  .days-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+  .day-chip{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:6px 11px;font-size:.85rem}
+  .day-chip b{color:var(--teal-deep)}
+  @media (prefers-color-scheme: dark){.day-chip b{color:var(--teal)}}
+
+  /* queue */
+  .queue{margin-top:18px;display:none}
+  .queue.show{display:block}
+  .queue h3{margin:0 0 10px;font-size:1rem}
+  .q-item{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:9px;background:var(--surface)}
+  .q-item img{width:56px;height:56px;object-fit:cover;border-radius:9px;flex:none;background:var(--surface-2)}
+  .q-meta{flex:1;min-width:0}
+  .q-name{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .q-sub{font-size:.82rem;color:var(--ink-2)}
+  .q-day{display:inline-block;background:var(--teal-soft);color:var(--teal-deep);font-weight:700;border-radius:7px;padding:0 8px;font-size:.8rem;margin-right:6px}
+  @media (prefers-color-scheme: dark){.q-day{color:var(--teal)}}
+  .q-status{font-size:.85rem;font-weight:700;flex:none;text-align:right}
+  .q-status.ok{color:var(--ok)}
+  .q-status.err{color:var(--coral)}
+  .q-status.up{color:var(--amber)}
+  .bar{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;width:0;background:var(--teal);border-radius:99px;transition:width .25s}
+  .queue-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+
+  /* ---------- Gallery ---------- */
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;flex-wrap:wrap}
+  .seg button{border:none;background:transparent;color:var(--ink-2);border-radius:9px;padding:8px 18px;font-weight:700;cursor:pointer;min-height:40px;font-size:.95rem}
+  .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .gallery-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .g-count{color:var(--ink-2);font-size:.92rem}
+  .group-title{display:flex;align-items:baseline;gap:10px;margin:24px 0 12px}
+  .group-title h3{margin:0;font-size:1.12rem;font-weight:900}
+  .group-title span{color:var(--ink-3);font-size:.88rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  @media (min-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
+  .card{border:none;padding:0;background:var(--surface);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left;border:1px solid var(--line);display:block;width:100%}
+  .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--surface-2)}
+  .card .cap{padding:9px 12px 11px}
+  .card .cap .who{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:7px}
+  .card .cap .when{font-size:.8rem;color:var(--ink-3)}
+  .avatar{width:22px;height:22px;border-radius:50%;background:var(--teal);color:#fff;display:inline-grid;place-items:center;font-size:.72rem;font-weight:900;flex:none}
+  .empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:38px 20px;text-align:center;color:var(--ink-2)}
+  .empty .t{font-weight:900;color:var(--ink);font-size:1.05rem;margin-bottom:5px}
+  .notice{border-radius:12px;padding:12px 15px;font-size:.9rem;margin-bottom:14px;display:none}
+  .notice.show{display:block}
+  .notice.warn{background:var(--amber-soft);color:var(--ink)}
+
+  /* ---------- Lightbox ---------- */
+  .lb{position:fixed;inset:0;background:rgba(8,18,15,.92);display:none;z-index:50;flex-direction:column}
+  .lb.open{display:flex}
+  .lb-top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;color:#fff;gap:10px}
+  .lb-top .info{font-size:.95rem;min-width:0}
+  .lb-top .info b{display:block;font-size:1.02rem}
+  .lb-top .info span{opacity:.75;font-size:.85rem}
+  .lb-close{background:rgba(255,255,255,.14);color:#fff;border:none;width:44px;height:44px;border-radius:50%;font-size:1.25rem;cursor:pointer;flex:none}
+  .lb-body{flex:1;display:grid;place-items:center;padding:0 14px;min-height:0}
+  .lb-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+  .lb-actions{display:flex;gap:10px;justify-content:center;padding:16px;flex-wrap:wrap}
+  .lb-actions a,.lb-actions button{display:inline-flex;align-items:center;min-height:48px;padding:11px 22px;border-radius:12px;font-weight:900;text-decoration:none;border:none;cursor:pointer;font-size:.98rem}
+  .lb-dl{background:var(--coral);color:#fff}
+  .lb-nav{background:rgba(255,255,255,.14);color:#fff}
+
+  footer{margin-top:44px;border-top:1px solid var(--line);padding-top:18px;color:var(--ink-3);font-size:.86rem;text-align:center}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="place">PHU QUOC · VIETNAM</div>
+      <h1>富國島相簿</h1>
+      <div class="dates">2026 年 11 月 11 日（三）至 11 月 15 日（日）· 共 5 日</div>
+      <p class="sub">全團 8 個人嘅相都放喺呢度，一次過上傳，一齊睇返成個旅程。</p>
+      <div class="hero-stats">
+        <div class="stat">📷 相片 <b id="statTotal">0</b> 張</div>
+        <div class="stat">👥 <b>8</b> 人參與</div>
+        <div class="stat sync"><span class="dot busy" id="syncDot"></span><span id="syncText">同步中…</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Q&A -->
+  <section aria-labelledby="qaTitle">
+    <div class="sec-head">
+      <span class="sec-num">Q&amp;A</span>
+      <h2 id="qaTitle">點用呢個相簿？</h2>
+    </div>
+    <div class="qa-grid">
+      <article class="qa">
+        <div class="q"><span class="badge">Q</span><span>我想上傳自己影嘅相，要點做？</span></div>
+        <p class="a">去下面<b>「上傳相片」</b>嗰度，<span class="hl">先揀返自己個名（身份）</span>，再撳掣一次過揀晒你想分享嘅相，系統就會自動上傳，唔使逐張慢慢嚟。</p>
+      </article>
+      <article class="qa">
+        <div class="q"><span class="badge">Q</span><span>咁多相，點樣先搵得返？</span></div>
+        <p class="a">相簿識得<b>自動按拍攝日子分好 Day 1 至 Day 5</b>。下面睇相嗰度可以隨時切換 <span class="hl">「按日子睇」</span> 或者 <span class="hl">「按朋友睇」</span>，想睇邊日、邊個影嘅都一目了然。</p>
+      </article>
+    </div>
+    <div class="member-strip" id="memberStrip" aria-label="成員名單"></div>
+  </section>
+
+  <!-- Upload -->
+  <section aria-labelledby="upTitle">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2 id="upTitle">上傳相片</h2>
+      <p>日子已經定好，唔使揀日子</p>
+    </div>
+    <div class="panel">
+      <div class="step-label"><span class="step-n">1</span>你係邊位？揀返自己個名</div>
+      <div class="chips" id="uploaderChips" role="group" aria-label="揀上傳者"></div>
+
+      <div class="step-label" style="margin-top:24px"><span class="step-n">2</span>揀相，一次過揀多張都得</div>
+      <div class="drop" id="dropZone">
+        <div class="big">📸 將相片放喺呢度，或者撳下面個掣揀相</div>
+        <div class="small">手機、相機原圖都得 · 系統會讀相片嘅拍攝日期，自動分入 Day 1 至 Day 5</div>
+        <button type="button" class="btn btn-primary" id="pickBtn">揀相上傳</button>
+        <input type="file" id="fileInput" accept="image/*" multiple class="sr" aria-label="揀相片上傳">
+      </div>
+
+      <div class="days-row" id="daysRow" aria-label="行程日子"></div>
+      <div class="days-note">💡 就算你旅程完咗先上傳都唔怕：分日係跟<b>相片本身嘅拍攝日期</b>，唔係上傳日期。如果張相冇拍攝日期（例如截圖），就會用返檔案日期嚟分。</div>
+
+      <div class="queue" id="queue">
+        <h3>上傳進度</h3>
+        <div id="queueList"></div>
+        <div class="queue-actions">
+          <button type="button" class="btn btn-teal" id="retryBtn" style="display:none">重試失敗嘅相</button>
+          <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除清單</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section aria-labelledby="galTitle">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2 id="galTitle">睇相</h2>
+      <p>撳相可以放大，仲可以下載原圖</p>
+    </div>
+    <div class="notice warn" id="syncNotice"></div>
+    <div class="gallery-tools">
+      <div class="seg" role="group" aria-label="睇相方式">
+        <button type="button" data-view="all" aria-pressed="true">全部</button>
+        <button type="button" data-view="day" aria-pressed="false">按日子</button>
+        <button type="button" data-view="person" aria-pressed="false">按朋友</button>
+      </div>
+      <div class="g-count" id="galCount"></div>
+    </div>
+    <div id="gallery"></div>
+  </section>
+
+  <footer>富國島之旅 · 2026 年 11 月 11 至 15 日 · 全團共享相簿，新相會自動同步俾大家睇到</footer>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="放大相片">
+  <div class="lb-top">
+    <div class="info"><b id="lbTitle"></b><span id="lbSub"></span></div>
+    <button type="button" class="lb-close" id="lbClose" aria-label="關閉">✕</button>
+  </div>
+  <div class="lb-body"><img id="lbImg" alt="放大的相片"></div>
+  <div class="lb-actions">
+    <button type="button" class="lb-nav" id="lbPrev">← 上一張</button>
+    <a class="lb-dl" id="lbDownload" href="#" target="_blank" rel="noopener">⬇ 下載原圖</a>
+    <button type="button" class="lb-nav" id="lbNext">下一張 →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== Built-in connection (not shown on page) ===== */
+  var CLOUD = "ly0kupqa";
+  var PRESET = "phu-quoc-upload";
+  var FOLDER = "phu-quoc";
+  var LIST_TAG = "phu-quoc-album";
+  var SYNC_MS = 30000;
+
+  /* ===== Fixed trip data ===== */
+  var MEMBERS = ["Tin","Abby","David","Fai","Hin","Krisley","Nicolas","Tom"];
+  var LEADER = "Tin";
+  var DAYS = [
+    { n:1, iso:"2026-11-11", label:"11月11日", wd:"三" },
+    { n:2, iso:"2026-11-12", label:"11月12日", wd:"四" },
+    { n:3, iso:"2026-11-13", label:"11月13日", wd:"五" },
+    { n:4, iso:"2026-11-14", label:"11月14日", wd:"六" },
+    { n:5, iso:"2026-11-15", label:"11月15日", wd:"日" }
+  ];
+
+  /* ===== State ===== */
+  var state = {
+    uploader: LEADER,
+    view: "all",
+    photos: [],        // {id,url,full,uploader,day,ts}
+    queue: [],         // {file,day,dateLabel,status,progress,urlId}
+    lbList: [],
+    lbIdx: 0,
+    syncOk: null,
+    lastSync: null
+  };
+
+  /* ===== Helpers ===== */
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function pad(n){ return (n<10?"0":"")+n; }
+  function dateKey(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function dayFromDate(d){
+    if(!d || isNaN(d.getTime())) return null;
+    var k = dateKey(d);
+    for(var i=0;i<DAYS.length;i++){ if(DAYS[i].iso===k) return DAYS[i].n; }
+    if(k < DAYS[0].iso) return 1;
+    if(k > DAYS[DAYS.length-1].iso) return 5;
+    return null;
+  }
+  function dayInfo(n){ for(var i=0;i<DAYS.length;i++){ if(DAYS[i].n===n) return DAYS[i]; } return DAYS[0]; }
+  function tagSlug(name){ return "by-" + name.toLowerCase().replace(/[^a-z0-9]+/g,"-"); }
+  function uploaderFromTags(tags){
+    if(!tags) return null;
+    for(var i=0;i<tags.length;i++){
+      if(tags[i].indexOf("by-")===0){
+        var slug = tags[i].slice(3);
+        for(var j=0;j<MEMBERS.length;j++){ if(MEMBERS[j].toLowerCase()===slug) return MEMBERS[j]; }
+      }
+    }
+    return null;
+  }
+  function dayFromTags(tags){
+    if(!tags) return null;
+    for(var i=0;i<tags.length;i++){
+      var m = /^day-([1-5])$/.exec(tags[i]);
+      if(m) return parseInt(m[1],10);
+    }
+    return null;
+  }
+  function thumb(url){
+    if(!url) return url;
+    return url.replace("/upload/","/upload/w_800,c_limit,q_auto,f_auto/");
+  }
+  function downloadUrl(url){
+    if(!url) return url;
+    return url.replace("/upload/","/upload/fl_attachment/");
+  }
+
+  /* ===== EXIF date reader (JPEG DateTimeOriginal) ===== */
+  function readExifDate(file){
+    return new Promise(function(resolve){
+      if(!/jpe?g/i.test(file.type) && !/\.jpe?g$/i.test(file.name||"")){
+        resolve(null); return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        try{ resolve(parseExif(reader.result)); }
+        catch(e){ resolve(null); }
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsArrayBuffer(file.slice(0, 262144));
+    });
+  }
+  function parseExif(buf){
+    var v = new DataView(buf);
+    if(v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    var off = 2;
+    while(off + 4 <= v.byteLength){
+      var marker = v.getUint16(off);
+      if(marker === 0xFFDA) break;
+      var len = v.getUint16(off+2);
+      if(marker === 0xFFE1){
+        // "Exif\0\0"
+        if(v.getUint32(off+4) === 0x45786966){
+          return parseTiff(v, off+10);
+        }
+      }
+      if(len < 2) break;
+      off += 2 + len;
+    }
+    return null;
+  }
+  function parseTiff(v, base){
+    if(base + 8 > v.byteLength) return null;
+    var little = v.getUint16(base) === 0x4949;
+    var u16 = function(o){ return v.getUint16(o, little); };
+    var u32 = function(o){ return v.getUint32(o, little); };
+    if(u16(base+2) !== 42) return null;
+    function readIfd(ifdOff){
+      var out = {};
+      if(ifdOff + 2 > v.byteLength) return out;
+      var count = u16(base+ifdOff);
+      for(var i=0;i<count;i++){
+        var e = base + ifdOff + 2 + i*12;
+        if(e + 12 > v.byteLength) break;
+        out[u16(e)] = { type: u16(e+2), num: u32(e+4), valOff: e+8, raw: u32(e+8) };
+      }
+      return out;
+    }
+    function asciiVal(entry){
+      if(!entry) return null;
+      var n = entry.num, o = entry.valOff;
+      if(n > 4) o = base + entry.raw;
+      var s = "";
+      for(var i=0;i<n && o+i < v.byteLength;i++){
+        var c = v.getUint8(o+i);
+        if(c===0) break;
+        s += String.fromCharCode(c);
+      }
+      return s;
+    }
+    function toDate(s){
+      if(!s) return null;
+      var m = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(s.trim());
+      if(!m) return null;
+      var d = new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    var ifd0 = readIfd(u32(base+4));
+    var dt = toDate(asciiVal(ifd0[0x0132]));
+    if(ifd0[0x8769]){
+      var exif = readIfd(ifd0[0x8769].raw);
+      var dto = toDate(asciiVal(exif[0x9003])) || toDate(asciiVal(exif[0x9004]));
+      if(dto) return dto;
+    }
+    return dt;
+  }
+
+  /* ===== Render: members ===== */
+  function renderMemberStrip(){
+    $("memberStrip").innerHTML = MEMBERS.map(function(m){
+      var lead = m===LEADER ? '<span class="crown">團主</span>' : '';
+      return '<span class="member-pill">'+esc(m)+lead+'</span>';
+    }).join("");
+  }
+  function renderChips(){
+    $("uploaderChips").innerHTML = MEMBERS.map(function(m){
+      var lead = m===LEADER ? '<span class="tag">團主</span>' : '';
+      var pressed = state.uploader===m ? "true" : "false";
+      return '<button type="button" class="chip" data-member="'+esc(m)+'" aria-pressed="'+pressed+'">'+esc(m)+lead+'</button>';
+    }).join("");
+    var chips = $("uploaderChips").querySelectorAll(".chip");
+    for(var i=0;i<chips.length;i++){
+      chips[i].addEventListener("click", function(){
+        state.uploader = this.getAttribute("data-member");
+        renderChips();
+      });
+    }
+  }
+  function renderDaysRow(){
+    $("daysRow").innerHTML = DAYS.map(function(d){
+      return '<span class="day-chip"><b>Day '+d.n+'</b> · '+d.label+'（'+d.wd+'）</span>';
+    }).join("");
+  }
+
+  /* ===== Upload ===== */
+  function addFiles(fileList){
+    var files = Array.prototype.slice.call(fileList||[]).filter(function(f){
+      return f.type.indexOf("image/")===0 || /\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name||"");
+    });
+    if(!files.length) return;
+    $("queue").classList.add("show");
+    files.forEach(function(file){
+      var item = { file:file, day:null, dateLabel:"讀緊拍攝日期…", status:"wait", progress:0, id:null };
+      state.queue.push(item);
+      readExifDate(file).then(function(exifDate){
+        var used = exifDate;
+        var src = "拍攝日期";
+        if(!used){ used = file.lastModified ? new Date(file.lastModified) : new Date(); src = "檔案日期"; }
+        item.day = dayFromDate(used) || 1;
+        item.dateLabel = src + "：" + used.getFullYear() + "年" + (used.getMonth()+1) + "月" + used.getDate() + "日";
+        renderQueue();
+        uploadItem(item);
+      });
+    });
+    renderQueue();
+  }
+  function renderQueue(){
+    var list = $("queueList");
+    list.innerHTML = state.queue.map(function(it, idx){
+      var st = it.status==="ok" ? '<span class="q-status ok">✓ 完成</span>'
+        : it.status==="err" ? '<span class="q-status err">失敗</span>'
+        : it.status==="up" ? '<span class="q-status up">上傳中 '+Math.round(it.progress)+'%</span>'
+        : '<span class="q-status">等候中</span>';
+      var dayBadge = it.day ? '<span class="q-day">Day '+it.day+'</span>' : '';
+      var url = "";
+      try{ url = URL.createObjectURL(it.file); }catch(e){}
+      return '<div class="q-item">'
+        + (url ? '<img src="'+url+'" alt="">' : '<img alt="">')
+        + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||"相片")+'</div>'
+        + '<div class="q-sub">'+dayBadge+esc(it.dateLabel)+' · '+esc(state.uploader)+'</div>'
+        + (it.status==="up" ? '<div class="bar"><i style="width:'+it.progress+'%"></i></div>' : '')
+        + '</div>' + st + '</div>';
+    }).join("");
+    var hasErr = state.queue.some(function(i){return i.status==="err";});
+    $("retryBtn").style.display = hasErr ? "" : "none";
+  }
+  function uploadItem(item){
+    item.status = "up"; item.progress = 0; renderQueue();
+    var day = item.day || 1;
+    var fd = new FormData();
+    fd.append("file", item.file);
+    fd.append("upload_preset", PRESET);
+    fd.append("folder", FOLDER + "/day-" + day);
+    fd.append("tags", LIST_TAG + ",day-" + day + "," + tagSlug(state.uploader));
+    fd.append("context", "uploader=" + state.uploader + "|day=" + day);
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", true);
+    xhr.upload.onprogress = function(e){
+      if(e.lengthComputable){ item.progress = (e.loaded/e.total)*100; renderQueue(); }
+    };
+    xhr.onload = function(){
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{
+          var res = JSON.parse(xhr.responseText);
+          item.status = "ok"; item.progress = 100; item.id = res.public_id;
+          upsertPhoto({
+            id: res.public_id,
+            url: res.secure_url,
+            uploader: state.uploader,
+            day: day,
+            ts: Date.now()
+          });
+          renderGallery();
+        }catch(e){ item.status = "err"; }
+      } else { item.status = "err"; }
+      renderQueue();
+    };
+    xhr.onerror = function(){ item.status = "err"; renderQueue(); };
+    xhr.send(fd);
+  }
+  function upsertPhoto(p){
+    for(var i=0;i<state.photos.length;i++){
+      if(state.photos[i].id===p.id){ state.photos[i]=p; return; }
+    }
+    state.photos.push(p);
+  }
+
+  /* ===== Sync: fetch shared album ===== */
+  function fetchAlbum(manual){
+    var dot = $("syncDot"), txt = $("syncText");
+    dot.className = "dot busy";
+    if(!manual) txt.textContent = "同步中…";
+    var url = "https://res.cloudinary.com/" + CLOUD + "/image/list/" + LIST_TAG + ".json?t=" + Date.now();
+    fetch(url, { cache:"no-store" }).then(function(r){
+      if(!r.ok) throw new Error("list " + r.status);
+      return r.json();
+    }).then(function(data){
+      var resources = (data && data.resources) || [];
+      var seen = {};
+      var merged = [];
+      resources.forEach(function(r){
+        var day = dayFromTags(r.tags) || 1;
+        var up = uploaderFromTags(r.tags) || LEADER;
+        var p = {
+          id: r.public_id,
+          url: r.secure_url,
+          uploader: up,
+          day: day,
+          ts: r.created_at ? new Date(r.created_at).getTime() : 0
+        };
+        seen[p.id] = true;
+        merged.push(p);
+      });
+      // Keep photos uploaded this session that the shared list has not caught up with yet
+      state.photos.forEach(function(p){ if(!seen[p.id]) merged.push(p); });
+      state.photos = merged;
+      state.syncOk = true;
+      state.lastSync = new Date();
+      dot.className = "dot";
+      txt.textContent = "已同步 · " + pad(state.lastSync.getHours()) + ":" + pad(state.lastSync.getMinutes()) + ":" + pad(state.lastSync.getSeconds());
+      $("syncNotice").className = "notice warn";
+      $("syncNotice").style.display = "none";
+      renderGallery();
+    }).catch(function(){
+      state.syncOk = false;
+      dot.className = "dot idle";
+      txt.textContent = state.photos.length ? "顯示緊呢部裝置上傳嘅相" : "暫時未同步到新相";
+      if(!state.photos.length){
+        var n = $("syncNotice");
+        n.style.display = "";
+        n.className = "notice warn show";
+        n.textContent = "暫時未載入到相簿內容，可能係網絡問題，頁面會每 30 秒自動再試。你仍然可以照常上傳相片。";
+      }
+      renderGallery();
+    });
+  }
+
+  /* ===== Gallery ===== */
+  function sortedPhotos(){
+    return state.photos.slice().sort(function(a,b){
+      if(a.day!==b.day) return a.day-b.day;
+      return (a.ts||0)-(b.ts||0);
+    });
+  }
+  function cardHtml(p){
+    var d = dayInfo(p.day);
+    return '<button type="button" class="card" data-id="'+esc(p.id)+'">'
+      + '<img loading="lazy" src="'+esc(thumb(p.url))+'" alt="'+esc(p.uploader)+' 喺 Day '+p.day+' 影嘅相">'
+      + '<span class="cap"><span class="who"><span class="avatar">'+esc(p.uploader.charAt(0))+'</span>'+esc(p.uploader)+'</span>'
+      + '<span class="when">Day '+p.day+' · '+d.label+'（'+d.wd+'）</span></span></button>';
+  }
+  function groupHtml(title, sub, photos){
+    if(!photos.length) return "";
+    return '<div class="group-title"><h3>'+esc(title)+'</h3><span>'+esc(sub)+'</span></div>'
+      + '<div class="grid">' + photos.map(cardHtml).join("") + '</div>';
+  }
+  function renderGallery(){
+    var all = sortedPhotos();
+    $("statTotal").textContent = all.length;
+    $("galCount").textContent = all.length ? "共 " + all.length + " 張相" : "";
+    var box = $("gallery");
+    state.lbList = all;
+    if(!all.length){
+      box.innerHTML = '<div class="empty"><div class="t">相簿暫時未有相</div>第一個上傳嘅人，就係開齋嗰個喇 — 去上面揀返自己個名，揀相上傳啦。</div>';
+      return;
+    }
+    var html = "";
+    if(state.view==="all"){
+      html = '<div class="grid">' + all.map(cardHtml).join("") + '</div>';
+    } else if(state.view==="day"){
+      DAYS.forEach(function(d){
+        var ps = all.filter(function(p){return p.day===d.n;});
+        if(ps.length) html += groupHtml("Day " + d.n + " · " + d.label + "（" + d.wd + "）", ps.length + " 張", ps);
+      });
+    } else {
+      MEMBERS.forEach(function(m){
+        var ps = all.filter(function(p){return p.uploader===m;});
+        if(ps.length) html += groupHtml(m + (m===LEADER ? "（團主）" : ""), ps.length + " 張", ps);
+      });
+    }
+    box.innerHTML = html;
+    var cards = box.querySelectorAll(".card");
+    for(var i=0;i<cards.length;i++){
+      cards[i].addEventListener("click", function(){
+        var id = this.getAttribute("data-id");
+        for(var j=0;j<state.lbList.length;j++){
+          if(state.lbList[j].id===id){ openLb(j); break; }
+        }
+      });
+    }
+  }
+
+  /* ===== Lightbox ===== */
+  function openLb(idx){
+    state.lbIdx = idx;
+    updateLb();
+    $("lightbox").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function closeLb(){
+    $("lightbox").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function updateLb(){
+    var p = state.lbList[state.lbIdx];
+    if(!p) return;
+    var d = dayInfo(p.day);
+    $("lbImg").src = p.url;
+    $("lbImg").alt = p.uploader + " 喺 Day " + p.day + " 影嘅相";
+    $("lbTitle").textContent = p.uploader + (p.uploader===LEADER ? "（團主）" : "");
+    $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + " 張";
+    $("lbDownload").href = downloadUrl(p.url);
+  }
+  function stepLb(dir){
+    if(!state.lbList.length) return;
+    state.lbIdx = (state.lbIdx + dir + state.lbList.length) % state.lbList.length;
+    updateLb();
+  }
+
+  /* ===== Wire up ===== */
+  function init(){
+    renderMemberStrip();
+    renderChips();
+    renderDaysRow();
+    renderGallery();
+
+    $("pickBtn").addEventListener("click", function(){ $("fileInput").click(); });
+    $("fileInput").addEventListener("change", function(){
+      addFiles(this.files);
+      this.value = "";
+    });
+    var dz = $("dropZone");
+    ["dragenter","dragover"].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add("drag"); });
+    });
+    ["dragleave","drop"].forEach(function(ev){
+      dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove("drag"); });
+    });
+    dz.addEventListener("drop", function(e){
+      if(e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+    });
+
+    $("retryBtn").addEventListener("click", function(){
+      state.queue.filter(function(i){return i.status==="err";}).forEach(uploadItem);
+    });
+    $("clearQueueBtn").addEventListener("click", function(){
+      state.queue = state.queue.filter(function(i){return i.status==="up";});
+      if(!state.queue.length) $("queue").classList.remove("show");
+      renderQueue();
+    });
+
+    var segBtns = document.querySelectorAll(".seg button");
+    for(var i=0;i<segBtns.length;i++){
+      segBtns[i].addEventListener("click", function(){
+        state.view = this.getAttribute("data-view");
+        for(var j=0;j<segBtns.length;j++) segBtns[j].setAttribute("aria-pressed", segBtns[j]===this ? "true" : "false");
+        renderGallery();
+      });
+    }
+
+    $("lbClose").addEventListener("click", closeLb);
+    $("lbPrev").addEventListener("click", function(){ stepLb(-1); });
+    $("lbNext").addEventListener("click", function(){ stepLb(1); });
+    $("lightbox").addEventListener("click", function(e){ if(e.target===this) closeLb(); });
+    document.addEventListener("keydown", function(e){
+      if(!$("lightbox").classList.contains("open")) return;
+      if(e.key==="Escape") closeLb();
+      if(e.key==="ArrowLeft") stepLb(-1);
+      if(e.key==="ArrowRight") stepLb(1);
+    });
+
+    fetchAlbum(false);
+    setInterval(function(){ fetchAlbum(false); }, SYNC_MS);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
