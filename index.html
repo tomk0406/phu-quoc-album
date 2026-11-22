@@ -776,7 +776,11 @@
   // image through the same unsigned preset into folder "phu-quoc-delete",
   // tagged "phu-quoc-album-delete", with context original_id=<photo public_id>
   // and status=requested. Cancelling (from the internal version) uploads
-  // another marker with status=cancelled. On every sync the page also
+  // another marker with status=cancelled. Marker public_ids are readable,
+  // never random: delete-day<day>-<first 9 chars of original id>-<timestamp>
+  // for a request, cancel-day<day>-<first 9 chars of original id>-<timestamp>
+  // for a cancellation (see markerPublicId below), so the leader can spot
+  // which photo each marker in the Cloudinary folder refers to. On every sync the page also
   // reads the marker tag list and, per original_id, the LATEST marker
   // wins: requested -> in this public version the photo is hidden
   // completely for everyone after a refresh (only the internal version
@@ -811,13 +815,34 @@
     for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type:"image/png" });
   }
+  // Readable marker name, so the leader can tell at a glance in the
+  // Cloudinary "phu-quoc-delete" folder which photo a marker belongs to:
+  //   delete-day2-jchemknef-1763800000000   (status=requested)
+  //   cancel-day2-jchemknef-1763800000000   (status=cancelled)
+  // i.e. <delete|cancel>-day<original photo's day>-<first 9 chars of the
+  // original photo's own id>-<timestamp>. No random Cloudinary name.
+  function markerPublicId(id, status){
+    var day = null;
+    for(var i=0;i<state.photos.length;i++){
+      if(state.photos[i].id === id && state.photos[i].day){ day = state.photos[i].day; break; }
+    }
+    if(!day) day = dayFromPublicId(id);
+    var base = String(id || "").split("/").pop() || "";
+    base = base.replace(/\.[a-z0-9]+$/i, "");
+    var shortId = base.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 9) || "photo";
+    var prefix = status === "cancelled" ? "cancel" : "delete";
+    var dayPart = day ? "day" + day : "dayx";
+    return prefix + "-" + dayPart + "-" + shortId + "-" + Date.now();
+  }
   function uploadDeleteMarker(id, status){
     state.deleteOptimistic[id] = { status:status, ts:Date.now() };
     // Unsigned upload, same preset as photo uploads — no API secret involved.
+    var markerName = markerPublicId(id, status);
     var fd = new FormData();
-    fd.append("file", markerBlob(), "delete-marker.png");
+    fd.append("file", markerBlob(), markerName + ".png");
     fd.append("upload_preset", PRESET);
     fd.append("folder", DELETE_FOLDER);
+    fd.append("public_id", markerName);
     fd.append("tags", DELETE_TAG);
     fd.append("context", "original_id=" + id + "|status=" + status);
     return fetch("https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", { method:"POST", body:fd })
