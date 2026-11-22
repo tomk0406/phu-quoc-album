@@ -167,6 +167,24 @@
   .del-panel ul li{margin:5px 0}
   .del-panel .del-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
   .del-panel .copy-note{font-size:.88rem;font-weight:700;color:var(--ok)}
+
+  /* ---------- Bulk download ---------- */
+  .dl-group{margin-top:16px}
+  .dl-group:first-of-type{margin-top:4px}
+  .dl-group h3{margin:0 0 9px;font-size:.98rem;font-weight:900;color:var(--ink-2)}
+  .dl-row{display:flex;flex-wrap:wrap;gap:9px}
+  .dl-btn{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.95rem;min-height:48px}
+  .dl-btn .n{font-size:.8rem;background:var(--teal-soft);color:var(--teal-deep);border-radius:999px;padding:1px 9px;font-weight:900}
+  @media (prefers-color-scheme: dark){.dl-btn .n{color:var(--teal)}}
+  .dl-btn:hover{border-color:var(--teal)}
+  .dl-btn[disabled]{opacity:.5;cursor:not-allowed}
+  .dl-btn.all-btn{background:var(--teal);border-color:var(--teal);color:#fff}
+  .dl-btn.all-btn .n{background:rgba(255,255,255,.22);color:#fff}
+  .dl-status{margin:14px 0 0;font-size:.92rem;font-weight:700;color:var(--ink-2);display:none}
+  .dl-status.show{display:block}
+  .dl-status.ok{color:var(--ok)}
+  .dl-status.err{color:var(--coral)}
+  .dl-note{margin:12px 0 0;font-size:.86rem;color:var(--ink-3)}
   .del-cancel{border:none;background:transparent;color:var(--coral);font-weight:700;cursor:pointer;text-decoration:underline;padding:2px 4px;min-height:0;font-size:.88rem}
   .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--surface-2)}
   .card .cap{padding:9px 12px 11px}
@@ -334,15 +352,38 @@
     <div id="gallery"></div>
 
     <div class="del-panel" id="deletePanel" hidden>
-      <h3>🗑 已要求刪除（未刪走，只係喺呢部裝置隱藏咗）</h3>
-      <p><b>撳「要求刪除」唔係即刻刪相。</b>呢度只係記低邊幾張有人要求刪除，同埋喺<b>呢部裝置、呢次開啟嘅頁面</b>將佢哋隱藏，唔再喺相簿出現。</p>
-      <p><b>呢個只係表面隱藏，唔會跨裝置同步：</b>相仍然喺 Cloudinary，其他朋友用自己部機開相簿仍然會睇到呢幾張相。因為呢頁冇一個全團共享嘅記錄位，隱藏狀態冇辦法傳去其他裝置。要所有人、所有裝置都睇唔到，必須由<b>團主去 Cloudinary 後台</b>一次過真刪，啲相先會真正消失。</p>
-      <p>呢份清單只留喺你而家開住嘅呢次頁面，離開之前請撳「複製刪除清單」傳返俾團主處理。</p>
+      <h3>🗑 已要求刪除</h3>
+      <p>下面呢幾張相已經喺呢度<b>隱藏咗，唔會再顯示</b>。撳「複製刪除清單」傳俾團主，團主會喺 Cloudinary 一次過真刪。</p>
       <ul id="deleteList"></ul>
       <div class="del-actions">
         <button type="button" class="btn btn-teal" id="copyDeleteBtn">複製刪除清單</button>
         <span class="copy-note" id="copyNote" role="status"></span>
       </div>
+    </div>
+  </section>
+
+  <!-- Bulk download -->
+  <section aria-labelledby="dlTitle">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2 id="dlTitle">一鍵下載</h2>
+      <p>成組相一次過打包下載</p>
+    </div>
+    <div class="panel">
+      <div class="dl-group">
+        <h3>全部</h3>
+        <div class="dl-row" id="dlAll"></div>
+      </div>
+      <div class="dl-group">
+        <h3>分朋友</h3>
+        <div class="dl-row" id="dlPeople"></div>
+      </div>
+      <div class="dl-group">
+        <h3>分日期</h3>
+        <div class="dl-row" id="dlDays"></div>
+      </div>
+      <p class="dl-status" id="dlStatus" role="status"></p>
+      <p class="dl-note">撳掣之後會將嗰組相打包成一個 ZIP 檔案下載，入面係原圖。相多嗰陣打包需時，請唔好重複撳。</p>
     </div>
   </section>
 
@@ -364,6 +405,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -722,7 +764,7 @@
     if($("lightbox").classList.contains("open")) updateLb();
   }
   function deleteRequestText(){
-    var lines = ["富國島相簿 — 要求刪除清單（以下相片只係喺要求者部裝置隱藏咗，未真正刪走，請團主去 Cloudinary 後台刪除）："];
+    var lines = ["富國島相簿 — 要求刪除清單（請團主去 Cloudinary 後台刪除以下相片）："];
     state.deleteRequests.forEach(function(id, i){
       var p = null;
       for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
@@ -748,7 +790,7 @@
       var p = null;
       for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
       var label = p ? (esc(p.uploader) + " · Day " + p.day + " · " + esc(dayInfo(p.day).label)) : esc(id);
-      return '<li>' + label + ' — 已喺呢部裝置隱藏，未真刪 <button type="button" class="del-cancel" data-cancel="'+esc(id)+'">取消要求（顯示返）</button></li>';
+      return '<li>' + label + ' — 已隱藏 <button type="button" class="del-cancel" data-cancel="'+esc(id)+'">取消要求（顯示返）</button></li>';
     }).join("");
     var btns = panel.querySelectorAll("[data-cancel]");
     for(var i=0;i<btns.length;i++){
@@ -898,12 +940,13 @@
     var hiddenCount = total.length - all.length;
     $("statTotal").textContent = all.length;
     $("galCount").textContent = all.length
-      ? "共 " + all.length + " 張相" + (hiddenCount ? "（另有 " + hiddenCount + " 張已要求刪除，喺呢部裝置隱藏咗）" : "")
+      ? "共 " + all.length + " 張相" + (hiddenCount ? "（另有 " + hiddenCount + " 張已要求刪除，已隱藏）" : "")
       : "";
     var box = $("gallery");
     state.lbList = all;
+    renderDownloads(all);
     if(!all.length && total.length){
-      box.innerHTML = '<div class="empty"><div class="t">呢部裝置上嘅相已經全部隱藏咗</div>所有相都俾人撳咗「要求刪除」，喺呢部裝置唔再顯示。相未真正刪走，其他裝置仍然睇到；要真刪，請團主跟下面清單去 Cloudinary 處理，或者喺清單撳「取消要求」將相顯示返。</div>';
+      box.innerHTML = '<div class="empty"><div class="t">相已經全部隱藏咗</div>所有相都俾人撳咗「要求刪除」。想睇返，可以喺下面清單撳「取消要求」；想真刪，請團主跟清單去 Cloudinary 處理。</div>';
       return;
     }
     if(!all.length){
@@ -960,6 +1003,132 @@
     }
   }
 
+  /* ===== Bulk download: one click per group (全部 / 分朋友 / 分日期) ===== */
+  var dlBusy = false;
+  function dlBtnHtml(label, count, kind, key, extraClass){
+    return '<button type="button" class="dl-btn '+(extraClass||'')+'" data-dl-kind="'+kind+'" data-dl-key="'+esc(key)+'"'+(count ? '' : ' disabled')+'>⬇ '+esc(label)+'<span class="n">'+count+' 張</span></button>';
+  }
+  function renderDownloads(visible){
+    if(!$("dlAll")) return;
+    var all = visible || sortedPhotos().filter(function(p){ return !isDeleteRequested(p.id); });
+    $("dlAll").innerHTML = dlBtnHtml("下載全部相片", all.length, "all", "all", "all-btn");
+    var peopleHtml = "";
+    MEMBERS.forEach(function(m){
+      var n = all.filter(function(p){ return p.uploader===m; }).length;
+      if(n) peopleHtml += dlBtnHtml(m, n, "person", m, "");
+    });
+    var rest = all.filter(function(p){ return MEMBERS.indexOf(p.uploader) < 0; });
+    if(rest.length) peopleHtml += dlBtnHtml("未標示", rest.length, "person", "__none__", "");
+    $("dlPeople").innerHTML = peopleHtml || '<span style="color:var(--ink-3);font-size:.9rem">暫時未有相</span>';
+    var daysHtml = "";
+    DAYS.forEach(function(d){
+      var n = all.filter(function(p){ return p.day===d.n; }).length;
+      if(n) daysHtml += dlBtnHtml("Day " + d.n + " · " + d.label, n, "day", String(d.n), "");
+    });
+    $("dlDays").innerHTML = daysHtml || '<span style="color:var(--ink-3);font-size:.9rem">暫時未有相</span>';
+    [$("dlAll"), $("dlPeople"), $("dlDays")].forEach(function(row){
+      var btns = row.querySelectorAll("[data-dl-kind]");
+      for(var i=0;i<btns.length;i++){
+        btns[i].addEventListener("click", function(){
+          startGroupDownload(this.getAttribute("data-dl-kind"), this.getAttribute("data-dl-key"));
+        });
+      }
+    });
+  }
+  function groupPhotos(kind, key){
+    var all = sortedPhotos().filter(function(p){ return !isDeleteRequested(p.id); });
+    if(kind==="person"){
+      if(key==="__none__") return { label:"未標示上傳者", file:"phu-quoc-unknown", photos:all.filter(function(p){ return MEMBERS.indexOf(p.uploader) < 0; }) };
+      return { label:key, file:"phu-quoc-" + key.toLowerCase(), photos:all.filter(function(p){ return p.uploader===key; }) };
+    }
+    if(kind==="day"){
+      var n = parseInt(key,10);
+      return { label:"Day " + n + " · " + dayInfo(n).label, file:"phu-quoc-day-" + n, photos:all.filter(function(p){ return p.day===n; }) };
+    }
+    return { label:"全部相片", file:"phu-quoc-all", photos:all };
+  }
+  function extOf(url){
+    var m = /\.([a-z0-9]{3,4})(?:[?#]|$)/i.exec(url || "");
+    return m ? "." + m[1].toLowerCase() : ".jpg";
+  }
+  function setDlStatus(msg, cls){
+    var s = $("dlStatus");
+    if(!s) return;
+    s.textContent = msg;
+    s.className = "dl-status show" + (cls ? " " + cls : "");
+  }
+  function startGroupDownload(kind, key){
+    if(dlBusy) return;
+    var g = groupPhotos(kind, key);
+    if(!g.photos.length) return;
+    dlBusy = true;
+    setDlStatus("準備緊「" + g.label + "」…（共 " + g.photos.length + " 張）");
+    if(window.JSZip){
+      downloadAsZip(g).then(function(){ dlBusy = false; }, function(){ dlBusy = false; });
+    } else {
+      // Fallback when the ZIP library could not load: save the originals one by one
+      downloadOneByOne(g);
+    }
+  }
+  function downloadAsZip(g){
+    var zip = new JSZip();
+    var done = 0, failed = 0;
+    var chain = Promise.resolve();
+    g.photos.forEach(function(p, i){
+      chain = chain.then(function(){
+        return fetch(p.url).then(function(r){
+          if(!r.ok) throw new Error("fetch failed");
+          return r.blob();
+        }).then(function(blob){
+          var num = ("00" + (i+1)).slice(-3);
+          zip.file("Day" + p.day + "-" + p.uploader + "-" + num + extOf(p.url), blob);
+          done++;
+        }).catch(function(){ failed++; }).then(function(){
+          setDlStatus("下載緊「" + g.label + "」… " + (done + failed) + " / " + g.photos.length + " 張");
+        });
+      });
+    });
+    return chain.then(function(){
+      if(!done){
+        setDlStatus("下載失敗，請再試一次。", "err");
+        return;
+      }
+      setDlStatus("打包緊 ZIP…");
+      return zip.generateAsync({ type:"blob" }).then(function(blob){
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = g.file + ".zip";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+        setDlStatus("✓ 已下載「" + g.label + "」" + done + " 張" + (failed ? "（有 " + failed + " 張下載唔到，已跳過）" : "") + "。", failed ? "" : "ok");
+      });
+    }).catch(function(){
+      setDlStatus("打包失敗，請再試一次。", "err");
+    });
+  }
+  function downloadOneByOne(g){
+    var i = 0;
+    function next(){
+      if(i >= g.photos.length){
+        setDlStatus("✓ 已逐張下載「" + g.label + "」共 " + g.photos.length + " 張。", "ok");
+        dlBusy = false;
+        return;
+      }
+      var p = g.photos[i++];
+      setDlStatus("逐張下載緊「" + g.label + "」… " + i + " / " + g.photos.length + " 張（瀏覽器可能會問允唔允許一次下載多個檔案）");
+      var a = document.createElement("a");
+      a.href = downloadUrl(p.url);
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(next, 700);
+    }
+    next();
+  }
+
   /* ===== Lightbox ===== */
   function openLb(idx){
     state.lbIdx = idx;
@@ -983,7 +1152,7 @@
     var delBtn = $("lbDeleteBtn");
     if(isDeleteRequested(p.id)){
       delBtn.disabled = true;
-      delBtn.textContent = "已要求刪除 · 待團主處理（未刪走）";
+      delBtn.textContent = "已要求刪除 · 待團主處理";
     } else {
       delBtn.disabled = false;
       delBtn.textContent = "要求刪除";
