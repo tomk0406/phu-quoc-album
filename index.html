@@ -175,15 +175,6 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   @media (min-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
   .card{position:relative;border:none;padding:0;background:var(--surface);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left;border:1px solid var(--line);display:block;width:100%}
-  .req-flag{position:absolute;top:8px;left:8px;background:var(--coral);color:#fff;font-size:.74rem;font-weight:900;border-radius:999px;padding:3px 10px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-  .del-panel{margin-top:22px;background:var(--coral-soft);border:1.5px solid var(--coral);border-radius:var(--radius);padding:18px 20px}
-  .del-panel h3{margin:0 0 6px;font-size:1.05rem}
-  .del-panel p{margin:6px 0;font-size:.92rem;color:var(--ink-2)}
-  .del-panel p b{color:var(--ink)}
-  .del-panel ul{margin:10px 0;padding-left:20px;font-size:.92rem}
-  .del-panel ul li{margin:5px 0}
-  .del-panel .del-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
-  .del-panel .copy-note{font-size:.88rem;font-weight:700;color:var(--ok)}
 
   /* ---------- Bulk download ---------- */
   .dl-group{margin-top:16px}
@@ -211,7 +202,6 @@
   .dl-status.ok{color:var(--ok)}
   .dl-status.err{color:var(--coral)}
   .dl-note{margin:12px 0 0;font-size:.86rem;color:var(--ink-3)}
-  .del-cancel{border:none;background:transparent;color:var(--coral);font-weight:700;cursor:pointer;text-decoration:underline;padding:2px 4px;min-height:0;font-size:.88rem}
   .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--surface-2)}
   .card .cap{padding:9px 12px 11px}
   .card .cap .who{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:7px}
@@ -387,16 +377,6 @@
       <div class="g-count" id="galCount"></div>
     </div>
     <div id="gallery"></div>
-
-    <div class="del-panel" id="deletePanel" hidden>
-      <h3>🗑 已要求刪除</h3>
-      <p>下面呢幾張相已經喺呢度<b>隱藏咗，唔會再顯示</b>。撳「複製刪除清單」傳俾團主，團主會喺 Cloudinary 一次過真刪。</p>
-      <ul id="deleteList"></ul>
-      <div class="del-actions">
-        <button type="button" class="btn btn-teal" id="copyDeleteBtn">複製刪除清單</button>
-        <span class="copy-note" id="copyNote" role="status"></span>
-      </div>
-    </div>
   </section>
 
   <!-- Bulk download -->
@@ -424,7 +404,7 @@
         <button type="button" class="btn btn-primary dl-confirm-btn" id="dlConfirmBtn" disabled style="margin-top:0">確定</button>
       </div>
       <p class="dl-status" id="dlStatus" role="status"></p>
-      <p class="dl-note">揀好組別之後，要撳「確定」先會開始將嗰組相打包成一個 ZIP 檔案下載，入面係原圖。相多嗰陣打包需時，請唔好重複撳。</p>
+      <p class="dl-note">揀好組別之後，要撳「確定」先會開始將嗰組相打包成一個 ZIP 檔案下載，入面係原圖。相多嗰陣打包需時，請唔好重複撳。已要求刪除嘅相唔會顯示，亦唔會計入下載。</p>
     </div>
   </section>
 
@@ -460,6 +440,8 @@
   var PRESET = "phu-quoc-upload";
   var FOLDER = "phu-quoc";
   var LIST_TAG = "phu-quoc-album";
+  var DELETE_FOLDER = "phu-quoc-delete";
+  var DELETE_TAG = "phu-quoc-album-delete";
   var SYNC_MS = 30000;
 
   /* ===== Fixed trip data ===== */
@@ -479,7 +461,10 @@
     view: "all",
     photos: [],        // {id,url,full,uploader,day,ts}
     queue: [],         // {file,uploader,day,dateLabel,status,progress,urlId}
-    deleteRequests: [], // photo ids marked "要求刪除" this session only; nothing is deleted from Cloudinary
+    deleteRequests: [], // effective photo ids marked "要求刪除" (shared Cloudinary markers win; localStorage is the instant-display fallback)
+    deleteShared: {},   // original_id -> latest shared marker status ("requested" | "cancelled") read from the phu-quoc-album-delete tag list
+    deleteOptimistic: {}, // original_id -> {status, ts}: just-written markers the shared list may not show yet; they win briefly so a photo does not flicker back
+    deleteSyncOk: null,
     lbList: [],
     lbIdx: 0,
     syncOk: null,
@@ -787,76 +772,141 @@
   }
 
   /* ===== Delete requests (record only — nothing is deleted here) ===== */
+  // Shared record, no API secret: pressing "要求刪除" uploads a tiny marker
+  // image through the same unsigned preset into folder "phu-quoc-delete",
+  // tagged "phu-quoc-album-delete", with context original_id=<photo public_id>
+  // and status=requested. Cancelling (from the internal version) uploads
+  // another marker with status=cancelled. On every sync the page also
+  // reads the marker tag list and, per original_id, the LATEST marker
+  // wins: requested -> in this public version the photo is hidden
+  // completely for everyone after a refresh (only the internal version
+  // shows it, in its 「待刪除」 grouping, for the leader to act on);
+  // cancelled -> it returns to its normal group. Marker images are never
+  // part of the album list, so they never render as photos.
+  // localStorage stays as the instant-display fallback on this device, but
+  // whenever a shared marker exists for a photo, the marker wins.
+  var DELETE_REQUESTS_KEY = "phu-quoc-album-delete-requests-v1";
+  function loadDeleteRequests(){
+    try{
+      var raw = window.localStorage.getItem(DELETE_REQUESTS_KEY);
+      if(!raw) return [];
+      var arr = JSON.parse(raw);
+      if(!arr || typeof arr.length !== "number") return [];
+      var out = [];
+      for(var i=0;i<arr.length;i++){
+        if(typeof arr[i] === "string" && arr[i] && out.indexOf(arr[i]) < 0) out.push(arr[i]);
+      }
+      return out;
+    }catch(e){ return []; }
+  }
+  function saveDeleteRequests(){
+    try{ window.localStorage.setItem(DELETE_REQUESTS_KEY, JSON.stringify(state.deleteRequests)); }
+    catch(e){ /* storage unavailable (e.g. private mode): hiding still works for this page view */ }
+  }
+  state.deleteRequests = loadDeleteRequests();
+  function markerBlob(){
+    var b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    var bin = atob(b64);
+    var arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type:"image/png" });
+  }
+  function uploadDeleteMarker(id, status){
+    state.deleteOptimistic[id] = { status:status, ts:Date.now() };
+    // Unsigned upload, same preset as photo uploads — no API secret involved.
+    var fd = new FormData();
+    fd.append("file", markerBlob(), "delete-marker.png");
+    fd.append("upload_preset", PRESET);
+    fd.append("folder", DELETE_FOLDER);
+    fd.append("tags", DELETE_TAG);
+    fd.append("context", "original_id=" + id + "|status=" + status);
+    return fetch("https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", { method:"POST", body:fd })
+      .then(function(r){
+        if(!r.ok) throw new Error("marker upload " + r.status);
+        return r.json();
+      })
+      .then(function(){
+        state.deleteShared[id] = status;
+        state.deleteSyncOk = true;
+        // Confirm against the shared list shortly after (it can lag a little)
+        setTimeout(function(){ fetchDeleteMarkers(true); }, 4000);
+      })
+      .catch(function(){
+        // Marker could not be written: the local fallback above still shows
+        // the change on this device; the next successful sync re-tries state.
+        state.deleteSyncOk = false;
+      });
+  }
+  function effectiveDeleteRequests(){
+    // Shared markers are authoritative where they exist; a marker written
+    // seconds ago on this device wins briefly while the shared list catches
+    // up; local ids with no marker at all are kept (upload pending).
+    var set = {};
+    var id;
+    for(id in state.deleteShared){
+      if(Object.prototype.hasOwnProperty.call(state.deleteShared, id) && state.deleteShared[id] === "requested") set[id] = true;
+    }
+    for(id in state.deleteOptimistic){
+      if(!Object.prototype.hasOwnProperty.call(state.deleteOptimistic, id)) continue;
+      if(Date.now() - state.deleteOptimistic[id].ts > 120000) continue;
+      if(state.deleteOptimistic[id].status === "requested") set[id] = true; else delete set[id];
+    }
+    state.deleteRequests.forEach(function(localId){
+      if(!Object.prototype.hasOwnProperty.call(state.deleteShared, localId)
+        && !Object.prototype.hasOwnProperty.call(state.deleteOptimistic, localId)
+        && !set[localId]) set[localId] = true;
+    });
+    var out = [];
+    for(id in set){ if(Object.prototype.hasOwnProperty.call(set, id)) out.push(id); }
+    return out;
+  }
+  function applyEffectiveDeleteRequests(){
+    var eff = effectiveDeleteRequests();
+    var changed = eff.length !== state.deleteRequests.length || eff.some(function(id){ return state.deleteRequests.indexOf(id) < 0; });
+    if(changed){
+      state.deleteRequests = eff;
+      saveDeleteRequests();
+    }
+    return changed;
+  }
+  function fetchDeleteMarkers(rerender){
+    var url = "https://res.cloudinary.com/" + CLOUD + "/image/list/" + DELETE_TAG + ".json?t=" + Date.now();
+    return fetch(url, { cache:"no-store" }).then(function(r){
+      if(!r.ok) throw new Error("delete list " + r.status);
+      return r.json();
+    }).then(function(data){
+      var latest = {}; // original_id -> {status, ts}
+      ((data && data.resources) || []).forEach(function(r){
+        var c = customContext(r);
+        if(!c || !c.original_id || !c.status) return;
+        var ts = r.created_at ? new Date(r.created_at).getTime() : 0;
+        var prev = latest[c.original_id];
+        if(!prev || ts >= prev.ts) latest[c.original_id] = { status:c.status, ts:ts };
+      });
+      var map = {};
+      for(var id in latest){ if(Object.prototype.hasOwnProperty.call(latest, id)) map[id] = latest[id].status; }
+      state.deleteShared = map;
+      for(var oid in state.deleteOptimistic){
+        if(Object.prototype.hasOwnProperty.call(state.deleteOptimistic, oid) && map[oid] === state.deleteOptimistic[oid].status) delete state.deleteOptimistic[oid];
+      }
+      state.deleteSyncOk = true;
+      if(applyEffectiveDeleteRequests() && rerender) renderGallery();
+    }).catch(function(){
+      // Marker list unreadable (e.g. offline): keep the local fallback as-is.
+      state.deleteSyncOk = false;
+    });
+  }
   function requestDelete(id){
     if(!id || isDeleteRequested(id)) return;
     state.deleteRequests.push(id);
-    // Surface hiding only: the photo leaves this page's gallery on this
-    // device/session. It still exists on Cloudinary and still shows on
-    // everyone else's device — there is no shared record to sync the
-    // hidden state, and the panel copy says so.
+    saveDeleteRequests();
+    // Instant local hide, then write the shared marker so the photo stays
+    // hidden for everyone after a refresh. The photo itself still exists
+    // on Cloudinary — only the leader deleting it there removes it for good.
     closeLb();
     renderGallery();
-    var panel = $("deletePanel");
-    if(panel) panel.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    uploadDeleteMarker(id, "requested");
   }
-  function cancelDeleteRequest(id){
-    state.deleteRequests = state.deleteRequests.filter(function(x){ return x !== id; });
-    renderGallery();
-    if($("lightbox").classList.contains("open")) updateLb();
-  }
-  function deleteRequestText(){
-    var lines = ["富國島相簿 — 要求刪除清單（請團主去 Cloudinary 後台刪除以下相片）："];
-    state.deleteRequests.forEach(function(id, i){
-      var p = null;
-      for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
-      if(p){
-        var d = dayInfo(p.day);
-        lines.push((i+1) + ". " + p.uploader + " · Day " + p.day + " · " + d.label + " — " + p.id);
-      } else {
-        lines.push((i+1) + ". " + id);
-      }
-    });
-    return lines.join("\n");
-  }
-  function renderDeletePanel(){
-    var panel = $("deletePanel");
-    if(!panel) return;
-    if(!state.deleteRequests.length){
-      panel.hidden = true;
-      $("deleteList").innerHTML = "";
-      return;
-    }
-    panel.hidden = false;
-    $("deleteList").innerHTML = state.deleteRequests.map(function(id){
-      var p = null;
-      for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
-      var label = p ? (esc(p.uploader) + " · Day " + p.day + " · " + esc(dayInfo(p.day).label)) : esc(id);
-      return '<li>' + label + ' — 已隱藏 <button type="button" class="del-cancel" data-cancel="'+esc(id)+'">取消要求（顯示返）</button></li>';
-    }).join("");
-    var btns = panel.querySelectorAll("[data-cancel]");
-    for(var i=0;i<btns.length;i++){
-      btns[i].addEventListener("click", function(){ cancelDeleteRequest(this.getAttribute("data-cancel")); });
-    }
-  }
-  function copyDeleteList(){
-    var note = $("copyNote");
-    var text = deleteRequestText();
-    function done(){ note.textContent = "已複製，傳俾團主去 Cloudinary 刪除就得。"; }
-    function fallback(){
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed"; ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try{ document.execCommand("copy"); done(); }
-      catch(e){ note.textContent = "複製唔到，請手動影低上面清單俾團主。"; }
-      document.body.removeChild(ta);
-    }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(done, fallback);
-    } else { fallback(); }
-  }
-
   /* ===== Sync notice ===== */
   function renderSyncNotice(){
     var n = $("syncNotice");
@@ -910,6 +960,7 @@
       var seen = {};
       var merged = [];
       resources.forEach(function(r){
+        if(r.public_id && String(r.public_id).indexOf(DELETE_FOLDER + "/") === 0) return; // delete markers are records, not photos
         var day = dayFromTags(r.tags) || dayFromPublicId(r.public_id) || dayFromContext(r) || 1;
         var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || "未標示";
         var p = {
@@ -931,7 +982,23 @@
       dot.className = "dot";
       txt.textContent = "已同步 · " + pad(state.lastSync.getHours()) + ":" + pad(state.lastSync.getMinutes()) + ":" + pad(state.lastSync.getSeconds());
       renderSyncNotice();
-      renderGallery();
+      // Also read the shared delete markers on every sync: the latest
+      // marker per photo wins over this device's local record, so after a
+      // refresh a requested photo stays hidden for everyone (or returns
+      // to its normal group when the latest marker is "cancelled").
+      fetchDeleteMarkers(false).then(function(){
+        var present = {};
+        state.photos.forEach(function(p){ present[p.id] = true; });
+        // Photos the leader has already really deleted on Cloudinary are
+        // gone from the album list: drop their markers/requests too, so
+        // nothing about them lingers.
+        for(var mid in state.deleteShared){
+          if(Object.prototype.hasOwnProperty.call(state.deleteShared, mid) && !present[mid]) delete state.deleteShared[mid];
+        }
+        state.deleteRequests = effectiveDeleteRequests().filter(function(id){ return present[id]; });
+        saveDeleteRequests();
+        renderGallery();
+      });
     }).catch(function(err){
       state.syncOk = false;
       state.listRestricted = !!(err && err.restricted);
@@ -958,9 +1025,7 @@
   }
   function cardHtml(p){
     var d = dayInfo(p.day);
-    var flag = isDeleteRequested(p.id) ? '<span class="req-flag">已要求刪除 · 待團主處理</span>' : '';
     return '<button type="button" class="card" data-id="'+esc(p.id)+'">'
-      + flag
       + '<img loading="lazy" src="'+esc(thumb(p.url))+'" alt="'+esc(p.uploader)+' 喺 Day '+p.day+' 影嘅相">'
       + '<span class="cap"><span class="who"><span class="avatar">'+esc(p.uploader.charAt(0))+'</span>'+esc(p.uploader)+'</span>'
       + '<span class="when">Day '+p.day+' · '+d.label+'（'+d.wd+'）</span></span></button>';
@@ -971,25 +1036,18 @@
       + '<div class="grid">' + photos.map(cardHtml).join("") + '</div>';
   }
   function renderGallery(){
-    renderDeletePanel();
     var total = sortedPhotos();
-    // Photos with a delete request are surface-hidden in this (external)
-    // album on this device: they never render in any view here, including
-    // "按朋友". The leader-only "待刪除" grouping lives in the internal
-    // version, not here.
+    // Public version: photos with a delete request are hidden completely
+    // — they never render in any view (全部 / 按日子 / 按朋友), never
+    // enter the lightbox list, and are excluded from the counts and from
+    // bulk downloads. Only the internal version shows them, in its own
+    // 「待刪除」 grouping, for the leader to act on.
     var all = total.filter(function(p){ return !isDeleteRequested(p.id); });
-    var hiddenCount = total.length - all.length;
     $("statTotal").textContent = all.length;
-    $("galCount").textContent = all.length
-      ? "共 " + all.length + " 張相" + (hiddenCount ? "（另有 " + hiddenCount + " 張已要求刪除，已隱藏）" : "")
-      : "";
+    $("galCount").textContent = all.length ? "共 " + all.length + " 張相" : "";
     var box = $("gallery");
     state.lbList = all;
     renderDownloads(all);
-    if(!all.length && total.length){
-      box.innerHTML = '<div class="empty"><div class="t">相已經全部隱藏咗</div>所有相都俾人撳咗「要求刪除」。想睇返，可以喺下面清單撳「取消要求」；想真刪，請團主跟清單去 Cloudinary 處理。</div>';
-      return;
-    }
     if(!all.length){
       if(state.listRestricted){
         box.innerHTML = '<div class="empty"><div class="t">相已經上傳咗，但暫時讀唔返</div>Cloudinary 封鎖咗相簿清單讀取，相冇唔見到。請管理員跟上面紅框嘅步驟開返 Resource list，啲相就會自己出現返，唔使重新上傳。</div>';
@@ -1004,7 +1062,7 @@
     }
     var html = "";
     if(state.view==="all"){
-      html = '<div class="grid">' + all.map(cardHtml).join("") + '</div>';
+      if(all.length) html = '<div class="grid">' + all.map(cardHtml).join("") + '</div>';
     } else if(state.view==="day"){
       DAYS.forEach(function(d){
         var ps = all.filter(function(p){return p.day===d.n;});
@@ -1225,13 +1283,8 @@
     $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + " 張";
     $("lbDownload").href = downloadUrl(p.url);
     var delBtn = $("lbDeleteBtn");
-    if(isDeleteRequested(p.id)){
-      delBtn.disabled = true;
-      delBtn.textContent = "已要求刪除 · 待團主處理";
-    } else {
-      delBtn.disabled = false;
-      delBtn.textContent = "要求刪除";
-    }
+    delBtn.disabled = false;
+    delBtn.textContent = "要求刪除";
   }
   function stepLb(dir){
     if(!state.lbList.length) return;
@@ -1296,9 +1349,9 @@
     });
     $("lbDeleteBtn").addEventListener("click", function(){
       var p = state.lbList[state.lbIdx];
-      if(p) requestDelete(p.id);
+      if(!p) return;
+      requestDelete(p.id);
     });
-    $("copyDeleteBtn").addEventListener("click", copyDeleteList);
     $("fileInput").addEventListener("change", function(){
       addFiles(this.files);
       this.value = "";
