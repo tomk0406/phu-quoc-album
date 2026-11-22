@@ -852,9 +852,16 @@
   // "phu-quoc/phu-quoc-deleted", tagged "phu-quoc-album-delete", with
   // context original_id=<photo public_id> and status=requested. Cancelling
   // (from the internal version) uploads another marker with
-  // status=cancelled. A marker's file name is exactly the original photo's
-  // own file name — no "delete-" prefix, no timestamp — only the folder
-  // differs (see markerPublicId below): original
+  // status=cancelled. A marker's name is "Delete-" + the original photo's
+  // own file name — no timestamp — and the uploaded FILE ITSELF carries
+  // that name (Delete-[original file name].png, built as a real File
+  // object, not a Blob relying on the FormData filename hint, which
+  // Cloudinary could ignore and fall back to a generic name in the
+  // backend). The upload also passes display_name=Delete-[original
+  // file name] so the Media Library shows the same name; if the
+  // unsigned preset rejects that parameter the upload is retried once
+  // without it (see uploadDeleteMarker below). Only the folder differs
+  // from the original (see markerPublicId below): original
   // phu-quoc/day-5/xmfk822i1skmhqaiazqe -> marker
   // phu-quoc/phu-quoc-deleted/Delete-xmfk822i1skmhqaiazqe; a
   // cancellation marker is that name plus "-cancel"
@@ -899,15 +906,34 @@
     for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type:"image/png" });
   }
-  // Marker file name = "Delete-" + the original file's own name:
-  // original xmfk822i1skmhqaiazqe -> marker Delete-xmfk822i1skmhqaiazqe.
+  // The marker as a real File whose OWN name is
+  // "Delete-[original file name].png" (or "...-cancel.png" when
+  // cancelling) — e.g. Delete-xmfk822i1skmhqaiazqe.png. The name has
+  // to live on the file itself: passing a bare Blob plus a FormData
+  // filename hint left Cloudinary showing a generic original file
+  // name (marker.png) in the backend. Falls back to the Blob +
+  // filename form only where the File constructor is unavailable.
+  function markerFile(markerName){
+    var blob = markerBlob();
+    var fileName = markerName + ".png";
+    try{
+      return new File([blob], fileName, { type:"image/png" });
+    }catch(e){
+      return blob; // caller then passes the same name as FormData filename
+    }
+  }
+  // Marker name = "Delete-" + the original file's own name:
+  // original xmfk822i1skmhqaiazqe -> marker Delete-xmfk822i1skmhqaiazqe,
+  // and the uploaded file itself is named that plus ".png"
+  // (Delete-xmfk822i1skmhqaiazqe.png — see markerFile above).
   // The marker is uploaded into DELETE_FOLDER
   // ("phu-quoc/phu-quoc-deleted"), so its full public_id is
   // phu-quoc/phu-quoc-deleted/Delete-xmfk822i1skmhqaiazqe
   // (status=requested). A cancellation marker keeps the same format
-  // plus "-cancel": Delete-xmfk822i1skmhqaiazqe-cancel
-  // (status=cancelled). This returns just the file-name part; the
-  // upload passes it as public_id together with folder=DELETE_FOLDER
+  // plus "-cancel": Delete-xmfk822i1skmhqaiazqe-cancel, file name
+  // Delete-xmfk822i1skmhqaiazqe-cancel.png (status=cancelled). This
+  // returns just the name part (no extension); the upload passes it
+  // as public_id AND display_name together with folder=DELETE_FOLDER
   // AND asset_folder=DELETE_FOLDER (folder alone left asset_folder as
   // "phu-quoc" in the backend, so markers looked like they sat in the
   // same folder as the photos).
@@ -921,19 +947,35 @@
     state.deleteOptimistic[id] = { status:status, ts:Date.now() };
     // Unsigned upload, same preset as photo uploads — no API secret involved.
     var markerName = markerPublicId(id, status);
-    var fd = new FormData();
-    fd.append("file", markerBlob(), markerName + ".png");
-    fd.append("upload_preset", PRESET);
-    fd.append("folder", DELETE_FOLDER);
-    fd.append("asset_folder", DELETE_FOLDER);
-    fd.append("public_id", markerName);
-    fd.append("tags", DELETE_TAG);
-    fd.append("context", "original_id=" + id + "|status=" + status);
-    return fetch("https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", { method:"POST", body:fd })
-      .then(function(r){
-        if(!r.ok) throw new Error("marker upload " + r.status);
-        return r.json();
-      })
+    var file = markerFile(markerName);
+    function buildForm(withDisplayName){
+      var fd = new FormData();
+      // A real File already carries the name Delete-[original].png;
+      // for the Blob fallback the same name goes in as the filename.
+      if(typeof File !== "undefined" && file instanceof File) fd.append("file", file);
+      else fd.append("file", file, markerName + ".png");
+      fd.append("upload_preset", PRESET);
+      fd.append("folder", DELETE_FOLDER);
+      fd.append("asset_folder", DELETE_FOLDER);
+      fd.append("public_id", markerName);
+      // So the backend's display name matches too, not just public_id.
+      if(withDisplayName) fd.append("display_name", markerName);
+      fd.append("tags", DELETE_TAG);
+      fd.append("context", "original_id=" + id + "|status=" + status);
+      return fd;
+    }
+    function postMarker(fd){
+      return fetch("https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", { method:"POST", body:fd })
+        .then(function(r){
+          if(!r.ok) throw new Error("marker upload " + r.status);
+          return r.json();
+        });
+    }
+    // First try WITH display_name; if the unsigned preset rejects that
+    // parameter (or anything else fails), retry once without it so the
+    // marker itself is never lost over a cosmetic field.
+    return postMarker(buildForm(true))
+      .catch(function(){ return postMarker(buildForm(false)); })
       .then(function(){
         state.deleteShared[id] = status;
         state.deleteSyncOk = true;
