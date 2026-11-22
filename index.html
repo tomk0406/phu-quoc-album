@@ -106,6 +106,9 @@
   .chip .tag{font-size:.72rem;background:var(--coral);color:#fff;border-radius:999px;padding:1px 7px;font-weight:700}
   .chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
   .chip[aria-pressed="true"] .tag{background:#fff;color:var(--coral)}
+  .uploader-status{margin:12px 0 0;font-size:.92rem;font-weight:700;color:var(--ink-2)}
+  .uploader-status.warn{color:var(--coral)}
+  .uploader-status.ok{color:var(--ok)}
   .chip:focus-visible,.btn:focus-visible,.seg button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
   .drop{margin-top:20px;border:2px dashed var(--line);border-radius:14px;padding:26px 16px;text-align:center;background:var(--surface-2)}
   .drop.drag{border-color:var(--teal);background:var(--teal-soft)}
@@ -154,7 +157,17 @@
   .group-title span{color:var(--ink-3);font-size:.88rem}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   @media (min-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
-  .card{border:none;padding:0;background:var(--surface);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left;border:1px solid var(--line);display:block;width:100%}
+  .card{position:relative;border:none;padding:0;background:var(--surface);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left;border:1px solid var(--line);display:block;width:100%}
+  .req-flag{position:absolute;top:8px;left:8px;background:var(--coral);color:#fff;font-size:.74rem;font-weight:900;border-radius:999px;padding:3px 10px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .del-panel{margin-top:22px;background:var(--coral-soft);border:1.5px solid var(--coral);border-radius:var(--radius);padding:18px 20px}
+  .del-panel h3{margin:0 0 6px;font-size:1.05rem}
+  .del-panel p{margin:6px 0;font-size:.92rem;color:var(--ink-2)}
+  .del-panel p b{color:var(--ink)}
+  .del-panel ul{margin:10px 0;padding-left:20px;font-size:.92rem}
+  .del-panel ul li{margin:5px 0}
+  .del-panel .del-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+  .del-panel .copy-note{font-size:.88rem;font-weight:700;color:var(--ok)}
+  .del-cancel{border:none;background:transparent;color:var(--coral);font-weight:700;cursor:pointer;text-decoration:underline;padding:2px 4px;min-height:0;font-size:.88rem}
   .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--surface-2)}
   .card .cap{padding:9px 12px 11px}
   .card .cap .who{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:7px}
@@ -185,8 +198,10 @@
   .lb-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
   .lb-actions{display:flex;gap:10px;justify-content:center;padding:16px;flex-wrap:wrap}
   .lb-actions a,.lb-actions button{display:inline-flex;align-items:center;min-height:48px;padding:11px 22px;border-radius:12px;font-weight:900;text-decoration:none;border:none;cursor:pointer;font-size:.98rem}
-  .lb-dl{background:var(--coral);color:#fff}
+  .lb-dl{background:var(--teal);color:#fff}
   .lb-nav{background:rgba(255,255,255,.14);color:#fff}
+  .lb-del{background:var(--coral);color:#fff}
+  .lb-del[disabled]{background:rgba(255,255,255,.22);color:#ffd9cc;cursor:default}
 
   footer{margin-top:44px;border-top:1px solid var(--line);padding-top:18px;color:var(--ink-3);font-size:.86rem;text-align:center}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -274,14 +289,15 @@
       <p>日子已經定好，唔使揀日子</p>
     </div>
     <div class="panel">
-      <div class="step-label"><span class="step-n">1</span>你係邊位？揀返自己個名</div>
+      <div class="step-label"><span class="step-n">1</span>你係邊位？每次上傳都要自己揀返個名</div>
       <div class="chips" id="uploaderChips" role="group" aria-label="揀上傳者"></div>
+      <p class="uploader-status warn" id="uploaderStatus" role="status">未揀人 — 預設唔會幫你揀任何人。請先撳上面自己個名，先可以上傳，費事入錯人。</p>
 
       <div class="step-label" style="margin-top:24px"><span class="step-n">2</span>揀相，一次過揀多張都得</div>
       <div class="drop" id="dropZone">
         <div class="big">📸 將相片放喺呢度，或者撳下面個掣揀相</div>
         <div class="small">手機、相機原圖都得 · 系統會讀相片嘅拍攝日期，自動分入 Day 1 至 Day 5</div>
-        <button type="button" class="btn btn-primary" id="pickBtn">揀相上傳</button>
+        <button type="button" class="btn btn-primary" id="pickBtn" disabled>揀相上傳</button>
         <input type="file" id="fileInput" accept="image/*" multiple class="sr" aria-label="揀相片上傳">
       </div>
 
@@ -293,7 +309,7 @@
         <div id="queueList"></div>
         <div class="queue-actions">
           <button type="button" class="btn btn-teal" id="retryBtn" style="display:none">重試失敗嘅相</button>
-          <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除清單</button>
+          <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除進度清單（唔會刪相）</button>
         </div>
       </div>
     </div>
@@ -316,6 +332,18 @@
       <div class="g-count" id="galCount"></div>
     </div>
     <div id="gallery"></div>
+
+    <div class="del-panel" id="deletePanel" hidden>
+      <h3>🗑 已要求刪除（未刪走，只係喺呢部裝置隱藏咗）</h3>
+      <p><b>撳「要求刪除」唔係即刻刪相。</b>呢度只係記低邊幾張有人要求刪除，同埋喺<b>呢部裝置、呢次開啟嘅頁面</b>將佢哋隱藏，唔再喺相簿出現。</p>
+      <p><b>呢個只係表面隱藏，唔會跨裝置同步：</b>相仍然喺 Cloudinary，其他朋友用自己部機開相簿仍然會睇到呢幾張相。因為呢頁冇一個全團共享嘅記錄位，隱藏狀態冇辦法傳去其他裝置。要所有人、所有裝置都睇唔到，必須由<b>團主去 Cloudinary 後台</b>一次過真刪，啲相先會真正消失。</p>
+      <p>呢份清單只留喺你而家開住嘅呢次頁面，離開之前請撳「複製刪除清單」傳返俾團主處理。</p>
+      <ul id="deleteList"></ul>
+      <div class="del-actions">
+        <button type="button" class="btn btn-teal" id="copyDeleteBtn">複製刪除清單</button>
+        <span class="copy-note" id="copyNote" role="status"></span>
+      </div>
+    </div>
   </section>
 
   <footer>富國島之旅 · 2026 年 11 月 11 至 15 日 · 全團共享相簿，新相會自動同步俾大家睇到</footer>
@@ -331,6 +359,7 @@
   <div class="lb-actions">
     <button type="button" class="lb-nav" id="lbPrev">← 上一張</button>
     <a class="lb-dl" id="lbDownload" href="#" target="_blank" rel="noopener">⬇ 下載原圖</a>
+    <button type="button" class="lb-del" id="lbDeleteBtn">要求刪除</button>
     <button type="button" class="lb-nav" id="lbNext">下一張 →</button>
   </div>
 </div>
@@ -363,10 +392,11 @@
 
   /* ===== State ===== */
   var state = {
-    uploader: LEADER,
+    uploader: null,    // no default person: every visit starts with nobody selected
     view: "all",
     photos: [],        // {id,url,full,uploader,day,ts}
-    queue: [],         // {file,day,dateLabel,status,progress,urlId}
+    queue: [],         // {file,uploader,day,dateLabel,status,progress,urlId}
+    deleteRequests: [], // photo ids marked "要求刪除" this session only; nothing is deleted from Cloudinary
     lbList: [],
     lbIdx: 0,
     syncOk: null,
@@ -553,6 +583,24 @@
         renderChips();
       });
     }
+    var st = $("uploaderStatus"), pick = $("pickBtn");
+    if(state.uploader){
+      st.textContent = "已揀：" + state.uploader + " — 相會記喺呢個名上傳，揀錯就撳返啱嗰個名。";
+      st.className = "uploader-status ok";
+      pick.disabled = false;
+    } else {
+      st.textContent = "未揀人 — 預設唔會幫你揀任何人。請先撳上面自己個名，先可以上傳，費事入錯人。";
+      st.className = "uploader-status warn";
+      pick.disabled = true;
+    }
+  }
+  function requireUploader(){
+    if(state.uploader) return true;
+    var st = $("uploaderStatus");
+    st.textContent = "⚠ 未揀人，唔可以上傳。請先喺上面「你係邊位？」揀返自己個名。";
+    st.className = "uploader-status warn";
+    $("uploaderChips").scrollIntoView({ behavior:"smooth", block:"center" });
+    return false;
   }
   function renderDaysRow(){
     $("daysRow").innerHTML = DAYS.map(function(d){
@@ -562,13 +610,14 @@
 
   /* ===== Upload ===== */
   function addFiles(fileList){
+    if(!requireUploader()) return;
     var files = Array.prototype.slice.call(fileList||[]).filter(function(f){
       return f.type.indexOf("image/")===0 || /\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name||"");
     });
     if(!files.length) return;
     $("queue").classList.add("show");
     files.forEach(function(file){
-      var item = { file:file, day:null, dateLabel:"讀緊拍攝日期…", status:"wait", progress:0, id:null };
+      var item = { file:file, uploader:state.uploader, day:null, dateLabel:"讀緊拍攝日期…", status:"wait", progress:0, id:null };
       state.queue.push(item);
       readExifDate(file).then(function(exifDate){
         var used = exifDate;
@@ -598,7 +647,7 @@
       return '<div class="q-item">'
         + (url ? '<img src="'+url+'" alt="">' : '<img alt="">')
         + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||"相片")+'</div>'
-        + '<div class="q-sub">'+dayBadge+esc(it.dateLabel)+' · '+esc(state.uploader)+'</div>'
+        + '<div class="q-sub">'+dayBadge+esc(it.dateLabel)+' · '+esc(it.uploader || "未揀人")+'</div>'
         + tagWarn
         + (it.status==="up" ? '<div class="bar"><i style="width:'+it.progress+'%"></i></div>' : '')
         + '</div>' + st + '</div>';
@@ -607,14 +656,15 @@
     $("retryBtn").style.display = hasErr ? "" : "none";
   }
   function uploadItem(item){
+    if(!item.uploader){ item.status = "err"; renderQueue(); return; }
     item.status = "up"; item.progress = 0; renderQueue();
     var day = item.day || 1;
     var fd = new FormData();
     fd.append("file", item.file);
     fd.append("upload_preset", PRESET);
     fd.append("folder", FOLDER + "/day-" + day);
-    fd.append("tags", LIST_TAG + ",day-" + day + "," + tagSlug(state.uploader));
-    fd.append("context", "uploader=" + state.uploader + "|day=" + day);
+    fd.append("tags", LIST_TAG + ",day-" + day + "," + tagSlug(item.uploader));
+    fd.append("context", "uploader=" + item.uploader + "|day=" + day);
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", true);
     xhr.upload.onprogress = function(e){
@@ -632,7 +682,7 @@
           upsertPhoto({
             id: res.public_id,
             url: resourceUrl(res),
-            uploader: state.uploader,
+            uploader: item.uploader,
             day: day,
             ts: Date.now()
           });
@@ -651,6 +701,77 @@
       if(state.photos[i].id===p.id){ state.photos[i]=p; return; }
     }
     state.photos.push(p);
+  }
+
+  /* ===== Delete requests (record only — nothing is deleted here) ===== */
+  function requestDelete(id){
+    if(!id || isDeleteRequested(id)) return;
+    state.deleteRequests.push(id);
+    // Surface hiding only: the photo leaves this page's gallery on this
+    // device/session. It still exists on Cloudinary and still shows on
+    // everyone else's device — there is no shared record to sync the
+    // hidden state, and the panel copy says so.
+    closeLb();
+    renderGallery();
+    var panel = $("deletePanel");
+    if(panel) panel.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  }
+  function cancelDeleteRequest(id){
+    state.deleteRequests = state.deleteRequests.filter(function(x){ return x !== id; });
+    renderGallery();
+    if($("lightbox").classList.contains("open")) updateLb();
+  }
+  function deleteRequestText(){
+    var lines = ["富國島相簿 — 要求刪除清單（以下相片只係喺要求者部裝置隱藏咗，未真正刪走，請團主去 Cloudinary 後台刪除）："];
+    state.deleteRequests.forEach(function(id, i){
+      var p = null;
+      for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
+      if(p){
+        var d = dayInfo(p.day);
+        lines.push((i+1) + ". " + p.uploader + " · Day " + p.day + " · " + d.label + " — " + p.id);
+      } else {
+        lines.push((i+1) + ". " + id);
+      }
+    });
+    return lines.join("\n");
+  }
+  function renderDeletePanel(){
+    var panel = $("deletePanel");
+    if(!panel) return;
+    if(!state.deleteRequests.length){
+      panel.hidden = true;
+      $("deleteList").innerHTML = "";
+      return;
+    }
+    panel.hidden = false;
+    $("deleteList").innerHTML = state.deleteRequests.map(function(id){
+      var p = null;
+      for(var j=0;j<state.photos.length;j++){ if(state.photos[j].id===id) p = state.photos[j]; }
+      var label = p ? (esc(p.uploader) + " · Day " + p.day + " · " + esc(dayInfo(p.day).label)) : esc(id);
+      return '<li>' + label + ' — 已喺呢部裝置隱藏，未真刪 <button type="button" class="del-cancel" data-cancel="'+esc(id)+'">取消要求（顯示返）</button></li>';
+    }).join("");
+    var btns = panel.querySelectorAll("[data-cancel]");
+    for(var i=0;i<btns.length;i++){
+      btns[i].addEventListener("click", function(){ cancelDeleteRequest(this.getAttribute("data-cancel")); });
+    }
+  }
+  function copyDeleteList(){
+    var note = $("copyNote");
+    var text = deleteRequestText();
+    function done(){ note.textContent = "已複製，傳俾團主去 Cloudinary 刪除就得。"; }
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); done(); }
+      catch(e){ note.textContent = "複製唔到，請手動影低上面清單俾團主。"; }
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
   }
 
   /* ===== Sync notice ===== */
@@ -707,7 +828,7 @@
       var merged = [];
       resources.forEach(function(r){
         var day = dayFromTags(r.tags) || dayFromPublicId(r.public_id) || dayFromContext(r) || 1;
-        var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || LEADER;
+        var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || "未標示";
         var p = {
           id: r.public_id,
           url: resourceUrl(r),
@@ -749,9 +870,14 @@
       return (a.ts||0)-(b.ts||0);
     });
   }
+  function isDeleteRequested(id){
+    return state.deleteRequests.indexOf(id) >= 0;
+  }
   function cardHtml(p){
     var d = dayInfo(p.day);
+    var flag = isDeleteRequested(p.id) ? '<span class="req-flag">已要求刪除 · 待團主處理</span>' : '';
     return '<button type="button" class="card" data-id="'+esc(p.id)+'">'
+      + flag
       + '<img loading="lazy" src="'+esc(thumb(p.url))+'" alt="'+esc(p.uploader)+' 喺 Day '+p.day+' 影嘅相">'
       + '<span class="cap"><span class="who"><span class="avatar">'+esc(p.uploader.charAt(0))+'</span>'+esc(p.uploader)+'</span>'
       + '<span class="when">Day '+p.day+' · '+d.label+'（'+d.wd+'）</span></span></button>';
@@ -762,11 +888,24 @@
       + '<div class="grid">' + photos.map(cardHtml).join("") + '</div>';
   }
   function renderGallery(){
-    var all = sortedPhotos();
+    renderDeletePanel();
+    var total = sortedPhotos();
+    // Photos with a delete request are surface-hidden in this (external)
+    // album on this device: they never render in any view here, including
+    // "按朋友". The leader-only "待刪除" grouping lives in the internal
+    // version, not here.
+    var all = total.filter(function(p){ return !isDeleteRequested(p.id); });
+    var hiddenCount = total.length - all.length;
     $("statTotal").textContent = all.length;
-    $("galCount").textContent = all.length ? "共 " + all.length + " 張相" : "";
+    $("galCount").textContent = all.length
+      ? "共 " + all.length + " 張相" + (hiddenCount ? "（另有 " + hiddenCount + " 張已要求刪除，喺呢部裝置隱藏咗）" : "")
+      : "";
     var box = $("gallery");
     state.lbList = all;
+    if(!all.length && total.length){
+      box.innerHTML = '<div class="empty"><div class="t">呢部裝置上嘅相已經全部隱藏咗</div>所有相都俾人撳咗「要求刪除」，喺呢部裝置唔再顯示。相未真正刪走，其他裝置仍然睇到；要真刪，請團主跟下面清單去 Cloudinary 處理，或者喺清單撳「取消要求」將相顯示返。</div>';
+      return;
+    }
     if(!all.length){
       if(state.listRestricted){
         box.innerHTML = '<div class="empty"><div class="t">相已經上傳咗，但暫時讀唔返</div>Cloudinary 封鎖咗相簿清單讀取，相冇唔見到。請管理員跟上面紅框嘅步驟開返 Resource list，啲相就會自己出現返，唔使重新上傳。</div>';
@@ -792,6 +931,8 @@
         var ps = all.filter(function(p){return p.uploader===m;});
         if(ps.length) html += groupHtml(m + (m===LEADER ? "（團主）" : ""), ps.length + " 張", ps);
       });
+      var rest = all.filter(function(p){ return MEMBERS.indexOf(p.uploader) < 0; });
+      if(rest.length) html += groupHtml("未標示上傳者", rest.length + " 張", rest);
     }
     box.innerHTML = html;
     var cards = box.querySelectorAll(".card");
@@ -839,6 +980,14 @@
     $("lbTitle").textContent = p.uploader + (p.uploader===LEADER ? "（團主）" : "");
     $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + " 張";
     $("lbDownload").href = downloadUrl(p.url);
+    var delBtn = $("lbDeleteBtn");
+    if(isDeleteRequested(p.id)){
+      delBtn.disabled = true;
+      delBtn.textContent = "已要求刪除 · 待團主處理（未刪走）";
+    } else {
+      delBtn.disabled = false;
+      delBtn.textContent = "要求刪除";
+    }
   }
   function stepLb(dir){
     if(!state.lbList.length) return;
@@ -853,7 +1002,15 @@
     renderDaysRow();
     renderGallery();
 
-    $("pickBtn").addEventListener("click", function(){ $("fileInput").click(); });
+    $("pickBtn").addEventListener("click", function(){
+      if(!requireUploader()) return;
+      $("fileInput").click();
+    });
+    $("lbDeleteBtn").addEventListener("click", function(){
+      var p = state.lbList[state.lbIdx];
+      if(p) requestDelete(p.id);
+    });
+    $("copyDeleteBtn").addEventListener("click", copyDeleteList);
     $("fileInput").addEventListener("change", function(){
       addFiles(this.files);
       this.value = "";
