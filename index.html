@@ -165,6 +165,13 @@
   .notice{border-radius:12px;padding:12px 15px;font-size:.9rem;margin-bottom:14px;display:none}
   .notice.show{display:block}
   .notice.warn{background:var(--amber-soft);color:var(--ink)}
+  .notice.blocked{background:var(--coral-soft);color:var(--ink);border:1.5px solid var(--coral)}
+  .notice .n-title{font-weight:900;font-size:1rem;margin-bottom:4px}
+  .notice p{margin:6px 0}
+  .notice ol{margin:8px 0 4px;padding-left:22px}
+  .notice ol li{margin:3px 0}
+  .notice .n-actions{margin-top:10px;display:flex;flex-wrap:wrap;gap:10px}
+  .notice .btn{min-height:44px;padding:9px 18px;font-size:.92rem}
 
   /* ---------- Lightbox ---------- */
   .lb{position:fixed;inset:0;background:rgba(8,18,15,.92);display:none;z-index:50;flex-direction:column}
@@ -363,7 +370,9 @@
     lbList: [],
     lbIdx: 0,
     syncOk: null,
-    lastSync: null
+    lastSync: null,
+    listRestricted: false,
+    tagProblem: false
   };
 
   /* ===== Helpers ===== */
@@ -398,6 +407,27 @@
       if(m) return parseInt(m[1],10);
     }
     return null;
+  }
+  function dayFromPublicId(pid){
+    if(!pid) return null;
+    var m = /day-([1-5])(?:\/|$)/.exec(pid);
+    return m ? parseInt(m[1],10) : null;
+  }
+  function customContext(r){
+    if(r && r.context && r.context.custom) return r.context.custom;
+    return null;
+  }
+  function uploaderFromContext(r){
+    var c = customContext(r);
+    if(!c || !c.uploader) return null;
+    for(var i=0;i<MEMBERS.length;i++){ if(MEMBERS[i]===c.uploader) return MEMBERS[i]; }
+    return null;
+  }
+  function dayFromContext(r){
+    var c = customContext(r);
+    if(!c || !c.day) return null;
+    var n = parseInt(c.day,10);
+    return (n>=1 && n<=5) ? n : null;
   }
   function thumb(url){
     if(!url) return url;
@@ -547,10 +577,14 @@
       var dayBadge = it.day ? '<span class="q-day">Day '+it.day+'</span>' : '';
       var url = "";
       try{ url = URL.createObjectURL(it.file); }catch(e){}
+      var tagWarn = (it.status==="ok" && it.tagWarn)
+        ? '<div class="q-sub" style="color:var(--coral);font-weight:700">⚠ 上傳成功，但 Cloudinary 回覆入面冇相簿標籤，重載後可能讀唔返。請管理員檢查上傳預設（Upload preset）係咪容許加入標籤（tags）。</div>'
+        : '';
       return '<div class="q-item">'
         + (url ? '<img src="'+url+'" alt="">' : '<img alt="">')
         + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||"相片")+'</div>'
         + '<div class="q-sub">'+dayBadge+esc(it.dateLabel)+' · '+esc(state.uploader)+'</div>'
+        + tagWarn
         + (it.status==="up" ? '<div class="bar"><i style="width:'+it.progress+'%"></i></div>' : '')
         + '</div>' + st + '</div>';
     }).join("");
@@ -576,6 +610,10 @@
         try{
           var res = JSON.parse(xhr.responseText);
           item.status = "ok"; item.progress = 100; item.id = res.public_id;
+          // The shared list is keyed by tag: if Cloudinary did not keep the
+          // album tag on this upload, the photo can never come back on reload.
+          item.tagWarn = !(res.tags && res.tags.indexOf(LIST_TAG) >= 0);
+          if(item.tagWarn) state.tagProblem = true;
           upsertPhoto({
             id: res.public_id,
             url: res.secure_url,
@@ -584,6 +622,8 @@
             ts: Date.now()
           });
           renderGallery();
+          // Re-check the shared list shortly after a successful upload
+          setTimeout(function(){ fetchAlbum(false); }, 5000);
         }catch(e){ item.status = "err"; }
       } else { item.status = "err"; }
       renderQueue();
@@ -598,6 +638,37 @@
     state.photos.push(p);
   }
 
+  /* ===== Sync notice ===== */
+  function renderSyncNotice(){
+    var n = $("syncNotice");
+    if(state.syncOk){
+      n.className = "notice warn";
+      n.style.display = "none";
+      n.innerHTML = "";
+      return;
+    }
+    n.style.display = "";
+    if(state.listRestricted){
+      n.className = "notice blocked show";
+      n.innerHTML = '<div class="n-title">⚠ 相已經上傳成功，但相簿清單俾 Cloudinary 封鎖咗</div>'
+        + '<p>你上傳嘅相已經入咗 Cloudinary，冇唔見到。不過 Cloudinary 帳戶預設會封鎖「資源清單」（Resource list）讀取，呢頁啱啱實測收到 <b>401 — Resources of type list are restricted in this account</b>，所以重載之後讀唔返啲相返嚟。要由<b>帳戶管理員</b>開返一次（只需做一次）：</p>'
+        + '<ol>'
+        + '<li>登入 Cloudinary Console，撳右上角齒輪 <b>Settings</b></li>'
+        + '<li>去 <b>Security</b> 分頁，搵 <b>Restricted media types</b>（媒體類型限制）</li>'
+        + '<li>取消剔選 <b>Resource list</b>，再撳 <b>Save</b></li>'
+        + '<li>返嚟呢頁撳下面「再試同步」，或者等一兩分鐘後重載</li>'
+        + '</ol>'
+        + '<p>開返之後，之前上傳咗嘅相會自己出現返，唔使重新上傳。朋友唔使做呢步，照常入密碼睇相同上傳就得。</p>'
+        + '<div class="n-actions"><button type="button" class="btn btn-teal" id="syncRetryBtn">再試同步</button></div>';
+    } else {
+      n.className = "notice warn show";
+      n.innerHTML = '<p style="margin:0">暫時未載入到相簿內容，可能係網絡問題，頁面會每 30 秒自動再試。你仍然可以照常上傳相片。</p>'
+        + '<div class="n-actions"><button type="button" class="btn btn-teal" id="syncRetryBtn">再試同步</button></div>';
+    }
+    var btn = $("syncRetryBtn");
+    if(btn) btn.addEventListener("click", function(){ fetchAlbum(true); });
+  }
+
   /* ===== Sync: fetch shared album ===== */
   function fetchAlbum(manual){
     var dot = $("syncDot"), txt = $("syncText");
@@ -605,15 +676,23 @@
     if(!manual) txt.textContent = "同步中…";
     var url = "https://res.cloudinary.com/" + CLOUD + "/image/list/" + LIST_TAG + ".json?t=" + Date.now();
     fetch(url, { cache:"no-store" }).then(function(r){
-      if(!r.ok) throw new Error("list " + r.status);
+      if(!r.ok){
+        return r.json().catch(function(){ return null; }).then(function(body){
+          var msg = (body && body.error && body.error.message) ? body.error.message : "";
+          var err = new Error(msg || ("list " + r.status));
+          err.status = r.status;
+          err.restricted = /list are restricted/i.test(msg);
+          throw err;
+        });
+      }
       return r.json();
     }).then(function(data){
       var resources = (data && data.resources) || [];
       var seen = {};
       var merged = [];
       resources.forEach(function(r){
-        var day = dayFromTags(r.tags) || 1;
-        var up = uploaderFromTags(r.tags) || LEADER;
+        var day = dayFromTags(r.tags) || dayFromPublicId(r.public_id) || dayFromContext(r) || 1;
+        var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || LEADER;
         var p = {
           id: r.public_id,
           url: r.secure_url,
@@ -628,22 +707,22 @@
       state.photos.forEach(function(p){ if(!seen[p.id]) merged.push(p); });
       state.photos = merged;
       state.syncOk = true;
+      state.listRestricted = false;
       state.lastSync = new Date();
       dot.className = "dot";
       txt.textContent = "已同步 · " + pad(state.lastSync.getHours()) + ":" + pad(state.lastSync.getMinutes()) + ":" + pad(state.lastSync.getSeconds());
-      $("syncNotice").className = "notice warn";
-      $("syncNotice").style.display = "none";
+      renderSyncNotice();
       renderGallery();
-    }).catch(function(){
+    }).catch(function(err){
       state.syncOk = false;
+      state.listRestricted = !!(err && err.restricted);
       dot.className = "dot idle";
-      txt.textContent = state.photos.length ? "顯示緊呢部裝置上傳嘅相" : "暫時未同步到新相";
-      if(!state.photos.length){
-        var n = $("syncNotice");
-        n.style.display = "";
-        n.className = "notice warn show";
-        n.textContent = "暫時未載入到相簿內容，可能係網絡問題，頁面會每 30 秒自動再試。你仍然可以照常上傳相片。";
+      if(state.listRestricted){
+        txt.textContent = "相簿清單被封鎖 · 未能同步";
+      } else {
+        txt.textContent = state.photos.length ? "顯示緊呢部裝置上傳嘅相" : "暫時未同步到新相";
       }
+      renderSyncNotice();
       renderGallery();
     });
   }
@@ -674,7 +753,15 @@
     var box = $("gallery");
     state.lbList = all;
     if(!all.length){
-      box.innerHTML = '<div class="empty"><div class="t">相簿暫時未有相</div>第一個上傳嘅人，就係開齋嗰個喇 — 去上面揀返自己個名，揀相上傳啦。</div>';
+      if(state.listRestricted){
+        box.innerHTML = '<div class="empty"><div class="t">相已經上傳咗，但暫時讀唔返</div>Cloudinary 封鎖咗相簿清單讀取，相冇唔見到。請管理員跟上面紅框嘅步驟開返 Resource list，啲相就會自己出現返，唔使重新上傳。</div>';
+      } else if(state.syncOk === false){
+        box.innerHTML = '<div class="empty"><div class="t">暫時載入唔到相簿</div>可能係網絡問題，頁面會每 30 秒自動再試；你仍然可以照常上傳相片。</div>';
+      } else if(state.syncOk === null){
+        box.innerHTML = '<div class="empty"><div class="t">載入緊相簿…</div>同步緊大家上傳嘅相，請稍等。</div>';
+      } else {
+        box.innerHTML = '<div class="empty"><div class="t">相簿暫時未有相</div>第一個上傳嘅人，就係開齋嗰個喇 — 去上面揀返自己個名，揀相上傳啦。</div>';
+      }
       return;
     }
     var html = "";
