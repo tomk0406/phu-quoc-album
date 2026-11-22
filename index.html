@@ -145,7 +145,7 @@
   @media (prefers-color-scheme: dark){.day-chip b{color:var(--teal)}}
 
   /* queue */
-  .queue{margin-top:18px;display:none}
+  .queue{margin-top:12px;display:none}
   .queue.show{display:block}
   .queue h3{margin:0 0 10px;font-size:1rem}
   .q-item{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:9px;background:var(--surface)}
@@ -357,9 +357,6 @@
         <input type="file" id="fileInput" accept="image/*,video/*,.mov,.mp4,.m4v,.webm,.avi" multiple class="sr" aria-label="揀相片或影片上傳">
       </div>
 
-      <div class="days-row" id="daysRow" aria-label="行程日子"></div>
-      <div class="days-note">💡 就算你旅程完咗先上傳都唔怕：分日係跟<b>相片本身嘅拍攝日期</b>，唔係上傳日期。如果張相冇拍攝日期（例如截圖），或者係影片，就會用返檔案日期嚟分。</div>
-
       <div class="queue" id="queue">
         <h3>上傳進度（每個檔案一條）</h3>
         <div id="queueList"></div>
@@ -368,6 +365,9 @@
           <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除進度清單（唔會刪檔案）</button>
         </div>
       </div>
+
+      <div class="days-row" id="daysRow" aria-label="行程日子"></div>
+      <div class="days-note">💡 就算你旅程完咗先上傳都唔怕：分日係跟<b>相片本身嘅拍攝日期</b>，唔係上傳日期。如果張相冇拍攝日期（例如截圖），或者係影片，就會用返檔案日期嚟分。</div>
     </div>
   </section>
 
@@ -671,13 +671,13 @@
   /* ===== Render: members ===== */
   function renderMemberStrip(){
     $("memberStrip").innerHTML = MEMBERS.map(function(m){
-      var lead = m===LEADER ? '<span class="crown">團主</span>' : '';
+      var lead = m===LEADER ? '<span class="crown">大隊長</span>' : '';
       return '<span class="member-pill">'+esc(m)+lead+'</span>';
     }).join("");
   }
   function renderChips(){
     $("uploaderChips").innerHTML = MEMBERS.map(function(m){
-      var lead = m===LEADER ? '<span class="tag">團主</span>' : '';
+      var lead = m===LEADER ? '<span class="tag">大隊長</span>' : '';
       var pressed = state.uploader===m ? "true" : "false";
       return '<button type="button" class="chip" data-member="'+esc(m)+'" aria-pressed="'+pressed+'">'+esc(m)+lead+'</button>';
     }).join("");
@@ -1251,7 +1251,7 @@
     } else {
       MEMBERS.forEach(function(m){
         var ps = all.filter(function(p){return p.uploader===m;});
-        if(ps.length) html += groupHtml(m + (m===LEADER ? "（團主）" : ""), countLabel(ps), ps);
+        if(ps.length) html += groupHtml(m + (m===LEADER ? "（大隊長）" : ""), countLabel(ps), ps);
       });
       var rest = all.filter(function(p){ return MEMBERS.indexOf(p.uploader) < 0; });
       if(rest.length) html += groupHtml("未標示上傳者", countLabel(rest), rest);
@@ -1472,7 +1472,7 @@
       imgEl.src = p.url;
       imgEl.alt = p.uploader + " 喺 Day " + p.day + " 影嘅相";
     }
-    $("lbTitle").textContent = p.uploader + (p.uploader===LEADER ? "（團主）" : "");
+    $("lbTitle").textContent = p.uploader + (p.uploader===LEADER ? "（大隊長）" : "");
     $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + (p.isVideo ? " 段（影片）" : " 張");
     $("lbDownload").href = downloadUrl(p.url);
     var delBtn = $("lbDeleteBtn");
