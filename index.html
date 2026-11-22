@@ -429,6 +429,21 @@
     var n = parseInt(c.day,10);
     return (n>=1 && n<=5) ? n : null;
   }
+  function resourceUrl(r){
+    if(!r) return "";
+    if(r.secure_url) return r.secure_url;
+    if(r.url) return String(r.url).replace(/^http:\/\//i, "https://");
+    if(!r.public_id) return "";
+    // The client-side list JSON does not include secure_url / url (verified
+    // against the live list: resources carry only public_id, version and
+    // format), so the delivery URL has to be rebuilt from those fields or
+    // every photo renders blank with only its alt text showing.
+    var pid = String(r.public_id).split("/").map(function(seg){ return encodeURIComponent(seg); }).join("/");
+    var ext = r.format ? "." + encodeURIComponent(String(r.format)) : "";
+    var suffix = (ext && pid.slice(-ext.length) !== ext) ? ext : "";
+    var ver = r.version ? "v" + r.version + "/" : "";
+    return "https://res.cloudinary.com/" + CLOUD + "/image/upload/" + ver + pid + suffix;
+  }
   function thumb(url){
     if(!url) return url;
     return url.replace("/upload/","/upload/w_800,c_limit,q_auto,f_auto/");
@@ -616,7 +631,7 @@
           if(item.tagWarn) state.tagProblem = true;
           upsertPhoto({
             id: res.public_id,
-            url: res.secure_url,
+            url: resourceUrl(res),
             uploader: state.uploader,
             day: day,
             ts: Date.now()
@@ -695,7 +710,7 @@
         var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || LEADER;
         var p = {
           id: r.public_id,
-          url: r.secure_url,
+          url: resourceUrl(r),
           uploader: up,
           day: day,
           ts: r.created_at ? new Date(r.created_at).getTime() : 0
@@ -785,6 +800,20 @@
         var id = this.getAttribute("data-id");
         for(var j=0;j<state.lbList.length;j++){
           if(state.lbList[j].id===id){ openLb(j); break; }
+        }
+      });
+    }
+    // If a thumbnail transformation ever fails, fall back once to the
+    // original delivery URL so the photo itself still shows.
+    var imgs = box.querySelectorAll(".card img");
+    for(var k=0;k<imgs.length;k++){
+      imgs[k].addEventListener("error", function(){
+        var card = this.closest ? this.closest(".card") : null;
+        var id2 = card ? card.getAttribute("data-id") : null;
+        for(var m=0;m<state.lbList.length;m++){
+          if(state.lbList[m].id===id2 && state.lbList[m].url && this.src !== state.lbList[m].url){
+            this.src = state.lbList[m].url;
+          }
         }
       });
     }
