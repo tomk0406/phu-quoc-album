@@ -203,6 +203,17 @@
   .dl-status.err{color:var(--coral)}
   .dl-note{margin:12px 0 0;font-size:.86rem;color:var(--ink-3)}
   .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--surface-2)}
+  .card .thumb-wrap{position:relative;display:block}
+  .video-badge{position:absolute;top:10px;right:10px;background:rgba(8,18,15,.82);color:#fff;border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:900;display:inline-flex;align-items:center;gap:5px}
+  .play-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:rgba(8,18,15,.68);color:#fff;display:grid;place-items:center;font-size:1.25rem;border:2px solid rgba(255,255,255,.85);pointer-events:none}
+  .lb-body video{max-width:100%;max-height:100%;border-radius:10px;background:#000}
+  .q-item video{width:56px;height:56px;object-fit:cover;border-radius:9px;flex:none;background:#000}
+  .q-item .q-thumb-ph{width:56px;height:56px;border-radius:9px;flex:none;background:var(--surface-2);display:grid;place-items:center;font-size:1.3rem}
+  .q-prog{display:flex;align-items:center;gap:10px;margin-top:7px}
+  .q-prog .bar{flex:1;margin-top:0;height:9px}
+  .q-pct{font-size:.85rem;font-weight:900;color:var(--teal-deep);min-width:44px;text-align:right}
+  @media (prefers-color-scheme: dark){.q-pct{color:var(--teal)}}
+  .q-size{font-size:.8rem;color:var(--ink-3)}
   .card .cap{padding:9px 12px 11px}
   .card .cap .who{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:7px}
   .card .cap .when{font-size:.8rem;color:var(--ink-3)}
@@ -294,7 +305,7 @@
       <div class="dates">2026 年 11 月 11 日（三）至 11 月 15 日（日）· 共 5 日</div>
       <p class="sub">全團 8 個人嘅相都放喺呢度，一次過上傳，一齊睇返成個旅程。</p>
       <div class="hero-stats">
-        <div class="stat">📷 相片 <b id="statTotal">0</b> 張</div>
+        <div class="stat">📷 相片／影片 <b id="statTotal">0</b> 項</div>
         <div class="stat">👥 <b>8</b> 人參與</div>
         <div class="stat sync"><span class="dot busy" id="syncDot"></span><span id="syncText">同步中…</span></div>
       </div>
@@ -316,7 +327,7 @@
     <div class="qa-grid">
       <article class="qa">
         <div class="q"><span class="badge">Q</span><span>我想上傳自己影嘅相，要點做？</span></div>
-        <p class="a">去下面<b>「上傳相片」</b>嗰度，<span class="hl">先揀返自己個名（身份）</span>，再撳掣一次過揀晒你想分享嘅相，系統就會自動上傳，唔使逐張慢慢嚟。</p>
+        <p class="a">去下面<b>「上傳相片／影片」</b>嗰度，<span class="hl">先揀返自己個名（身份）</span>，再撳掣一次過揀晒你想分享嘅相同片，系統就會自動上傳，每個檔案都有自己嘅進度條，唔使逐個慢慢嚟。</p>
       </article>
       <article class="qa">
         <div class="q"><span class="badge">Q</span><span>咁多相，點樣先搵得返？</span></div>
@@ -330,7 +341,7 @@
   <section aria-labelledby="upTitle">
     <div class="sec-head">
       <span class="sec-num">01</span>
-      <h2 id="upTitle">上傳相片</h2>
+      <h2 id="upTitle">上傳相片／影片</h2>
       <p>日子已經定好，唔使揀日子</p>
     </div>
     <div class="panel">
@@ -338,23 +349,23 @@
       <div class="chips" id="uploaderChips" role="group" aria-label="揀上傳者"></div>
       <p class="uploader-status warn" id="uploaderStatus" role="status">未揀人 - 請先撳上面自己個名，先可以上傳。</p>
 
-      <div class="step-label" style="margin-top:24px"><span class="step-n">2</span>揀相，一次過揀多張都得</div>
+      <div class="step-label" style="margin-top:24px"><span class="step-n">2</span>揀相／片，一次過揀多個檔案都得</div>
       <div class="drop" id="dropZone">
-        <div class="big">📸 將相片放喺呢度，或者撳下面個掣揀相</div>
-        <div class="small">手機、相機原圖都得 · 系統會讀相片嘅拍攝日期，自動分入 Day 1 至 Day 5</div>
-        <button type="button" class="btn btn-primary" id="pickBtn" disabled>揀相上傳</button>
-        <input type="file" id="fileInput" accept="image/*" multiple class="sr" aria-label="揀相片上傳">
+        <div class="big">📸🎬 將相片／影片放喺呢度，或者撳下面個掣揀檔案</div>
+        <div class="small">手機、相機原圖同影片（MP4／MOV 等）都得 · 相片會讀拍攝日期，影片會用檔案日期，自動分入 Day 1 至 Day 5 · 影片較大，上傳需時，請睇住每個檔案嘅進度條</div>
+        <button type="button" class="btn btn-primary" id="pickBtn" disabled>揀相／片上傳</button>
+        <input type="file" id="fileInput" accept="image/*,video/*,.mov,.mp4,.m4v,.webm,.avi" multiple class="sr" aria-label="揀相片或影片上傳">
       </div>
 
       <div class="days-row" id="daysRow" aria-label="行程日子"></div>
-      <div class="days-note">💡 就算你旅程完咗先上傳都唔怕：分日係跟<b>相片本身嘅拍攝日期</b>，唔係上傳日期。如果張相冇拍攝日期（例如截圖），就會用返檔案日期嚟分。</div>
+      <div class="days-note">💡 就算你旅程完咗先上傳都唔怕：分日係跟<b>相片本身嘅拍攝日期</b>，唔係上傳日期。如果張相冇拍攝日期（例如截圖），或者係影片，就會用返檔案日期嚟分。</div>
 
       <div class="queue" id="queue">
-        <h3>上傳進度</h3>
+        <h3>上傳進度（每個檔案一條）</h3>
         <div id="queueList"></div>
         <div class="queue-actions">
-          <button type="button" class="btn btn-teal" id="retryBtn" style="display:none">重試失敗嘅相</button>
-          <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除進度清單（唔會刪相）</button>
+          <button type="button" class="btn btn-teal" id="retryBtn" style="display:none">重試失敗嘅檔案</button>
+          <button type="button" class="btn btn-ghost" id="clearQueueBtn">清除進度清單（唔會刪檔案）</button>
         </div>
       </div>
     </div>
@@ -365,7 +376,7 @@
     <div class="sec-head">
       <span class="sec-num">02</span>
       <h2 id="galTitle">睇相</h2>
-      <p>撳相可以放大，仲可以下載原圖</p>
+      <p>撳相可以放大，撳片可以播放，仲可以下載原檔</p>
     </div>
     <div class="notice warn" id="syncNotice"></div>
     <div class="gallery-tools">
@@ -404,7 +415,7 @@
         <button type="button" class="btn btn-primary dl-confirm-btn" id="dlConfirmBtn" disabled style="margin-top:0">確定</button>
       </div>
       <p class="dl-status" id="dlStatus" role="status"></p>
-      <p class="dl-note">揀好組別之後，要撳「確定」先會開始將嗰組相打包成一個 ZIP 檔案下載，入面係原圖。相多嗰陣打包需時，請唔好重複撳。已要求刪除嘅相唔會顯示，亦唔會計入下載。</p>
+      <p class="dl-note">揀好組別之後，要撳「確定」先會開始將嗰組相／片打包成一個 ZIP 檔案下載，入面係原檔。檔案多嗰陣打包需時，請唔好重複撳。已要求刪除嘅相／片唔會顯示，亦唔會計入下載。</p>
     </div>
   </section>
 
@@ -417,10 +428,10 @@
     <div class="info"><b id="lbTitle"></b><span id="lbSub"></span></div>
     <button type="button" class="lb-close" id="lbClose" aria-label="關閉">✕</button>
   </div>
-  <div class="lb-body"><img id="lbImg" alt="放大的相片"></div>
+  <div class="lb-body"><img id="lbImg" alt="放大的相片"><video id="lbVideo" controls playsinline preload="metadata" style="display:none" aria-label="播放影片"></video></div>
   <div class="lb-actions">
     <button type="button" class="lb-nav" id="lbPrev">← 上一張</button>
-    <a class="lb-dl" id="lbDownload" href="#" target="_blank" rel="noopener">⬇ 下載原圖</a>
+    <a class="lb-dl" id="lbDownload" href="#" target="_blank" rel="noopener">⬇ 下載原檔</a>
     <button type="button" class="lb-del" id="lbDeleteBtn">要求刪除</button>
     <button type="button" class="lb-nav" id="lbNext">下一張 →</button>
   </div>
@@ -528,11 +539,12 @@
     var n = parseInt(c.day,10);
     return (n>=1 && n<=5) ? n : null;
   }
-  function resourceUrl(r){
+  function resourceUrl(r, resourceType){
     if(!r) return "";
     if(r.secure_url) return r.secure_url;
     if(r.url) return String(r.url).replace(/^http:\/\//i, "https://");
     if(!r.public_id) return "";
+    var rt = resourceType || r.resource_type || "image";
     // The client-side list JSON does not include secure_url / url (verified
     // against the live list: resources carry only public_id, version and
     // format), so the delivery URL has to be rebuilt from those fields or
@@ -541,11 +553,35 @@
     var ext = r.format ? "." + encodeURIComponent(String(r.format)) : "";
     var suffix = (ext && pid.slice(-ext.length) !== ext) ? ext : "";
     var ver = r.version ? "v" + r.version + "/" : "";
-    return "https://res.cloudinary.com/" + CLOUD + "/image/upload/" + ver + pid + suffix;
+    return "https://res.cloudinary.com/" + CLOUD + "/" + rt + "/upload/" + ver + pid + suffix;
+  }
+  function isVideoFile(file){
+    if(!file) return false;
+    if(file.type && file.type.indexOf("video/")===0) return true;
+    return /\.(mp4|mov|m4v|webm|avi|mkv|3gp)$/i.test(file.name||"");
+  }
+  function formatBytes(n){
+    if(n==null || isNaN(n)) return "";
+    if(n < 1024) return n + " B";
+    if(n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+    if(n < 1024*1024*1024) return (n/(1024*1024)).toFixed(1) + " MB";
+    return (n/(1024*1024*1024)).toFixed(2) + " GB";
   }
   function thumb(url){
     if(!url) return url;
     return url.replace("/upload/","/upload/w_800,c_limit,q_auto,f_auto/");
+  }
+  function videoPoster(url){
+    if(!url) return url;
+    // Cloudinary derives a JPEG poster from a video: same delivery path
+    // under /video/upload/ with a frame grab (so_0) and a .jpg extension.
+    var u = url.replace("/video/upload/","/video/upload/w_800,c_limit,q_auto,so_0/");
+    u = u.replace(/\.[a-z0-9]+($|\?)/i, ".jpg$1");
+    return u;
+  }
+  function thumbFor(p){
+    if(p && p.isVideo) return videoPoster(p.url);
+    return thumb(p ? p.url : "");
   }
   function downloadUrl(url){
     if(!url) return url;
@@ -681,13 +717,23 @@
   function addFiles(fileList){
     if(!requireUploader()) return;
     var files = Array.prototype.slice.call(fileList||[]).filter(function(f){
-      return f.type.indexOf("image/")===0 || /\.(jpe?g|png|heic|heif|webp|gif)$/i.test(f.name||"");
+      return f.type.indexOf("image/")===0 || f.type.indexOf("video/")===0 || /\.(jpe?g|png|heic|heif|webp|gif|mp4|mov|m4v|webm|avi|mkv|3gp)$/i.test(f.name||"");
     });
     if(!files.length) return;
     $("queue").classList.add("show");
     files.forEach(function(file){
-      var item = { file:file, uploader:state.uploader, day:null, dateLabel:"讀緊拍攝日期…", status:"wait", progress:0, id:null };
+      var isVid = isVideoFile(file);
+      var item = { file:file, uploader:state.uploader, day:null, dateLabel: isVid ? "讀緊檔案日期…" : "讀緊拍攝日期…", status:"wait", progress:0, loaded:0, total:file.size||0, isVideo:isVid, id:null };
       state.queue.push(item);
+      if(isVid){
+        // Videos carry no JPEG EXIF: file date decides the Day.
+        var usedV = file.lastModified ? new Date(file.lastModified) : new Date();
+        item.day = dayFromDate(usedV) || 1;
+        item.dateLabel = "檔案日期：" + usedV.getFullYear() + "年" + (usedV.getMonth()+1) + "月" + usedV.getDate() + "日";
+        renderQueue();
+        uploadItem(item);
+        return;
+      }
       readExifDate(file).then(function(exifDate){
         var used = exifDate;
         var src = "拍攝日期";
@@ -703,26 +749,51 @@
   function renderQueue(){
     var list = $("queueList");
     list.innerHTML = state.queue.map(function(it, idx){
-      var st = it.status==="ok" ? '<span class="q-status ok">✓ 完成</span>'
-        : it.status==="err" ? '<span class="q-status err">失敗</span>'
-        : it.status==="up" ? '<span class="q-status up">上傳中 '+Math.round(it.progress)+'%</span>'
-        : '<span class="q-status">等候中</span>';
+      var pct = Math.round(it.progress||0);
+      var st = it.status==="ok" ? '<span class="q-status ok" data-q-status="'+idx+'">✓ 完成 100%</span>'
+        : it.status==="err" ? '<span class="q-status err" data-q-status="'+idx+'">失敗 '+pct+'%</span>'
+        : it.status==="up" ? '<span class="q-status up" data-q-status="'+idx+'">上傳中 '+pct+'%</span>'
+        : '<span class="q-status" data-q-status="'+idx+'">等候中 0%</span>';
       var dayBadge = it.day ? '<span class="q-day">Day '+it.day+'</span>' : '';
+      var kindLabel = it.isVideo ? '🎬 影片' : '📷 相片';
+      var sizeTxt = formatBytes(it.file && it.file.size);
+      var loadedTxt = it.status==="up" && it.total ? ' · 已傳 ' + formatBytes(it.loaded||0) + ' / ' + formatBytes(it.total) : '';
       var url = "";
       try{ url = URL.createObjectURL(it.file); }catch(e){}
+      var thumbHtml = it.isVideo
+        ? (url ? '<video src="'+url+'" muted playsinline preload="metadata" aria-hidden="true"></video>' : '<span class="q-thumb-ph" aria-hidden="true">🎬</span>')
+        : (url ? '<img src="'+url+'" alt="">' : '<img alt="">');
       var tagWarn = (it.status==="ok" && it.tagWarn)
         ? '<div class="q-sub" style="color:var(--coral);font-weight:700">⚠ 上傳成功，但 Cloudinary 回覆入面冇相簿標籤，重載後可能讀唔返。請管理員檢查上傳預設（Upload preset）係咪容許加入標籤（tags）。</div>'
         : '';
+      var barColor = it.status==="err" ? 'background:var(--coral)' : (it.status==="ok" ? 'background:var(--ok)' : '');
       return '<div class="q-item">'
-        + (url ? '<img src="'+url+'" alt="">' : '<img alt="">')
-        + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||"相片")+'</div>'
-        + '<div class="q-sub">'+dayBadge+esc(it.dateLabel)+' · '+esc(it.uploader || "未揀人")+'</div>'
+        + thumbHtml
+        + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||(it.isVideo?"影片":"相片"))+'</div>'
+        + '<div class="q-sub">'+dayBadge+esc(kindLabel)+' · '+esc(it.dateLabel)+' · '+esc(it.uploader || "未揀人")+(sizeTxt?' · '+esc(sizeTxt):'')+'<span data-q-loaded="'+idx+'">'+esc(loadedTxt)+'</span></div>'
         + tagWarn
-        + (it.status==="up" ? '<div class="bar"><i style="width:'+it.progress+'%"></i></div>' : '')
+        + '<div class="q-prog"><div class="bar"><i data-q-fill="'+idx+'" style="width:'+(it.progress||0)+'%;'+barColor+'"></i></div><span class="q-pct" data-q-pct="'+idx+'">'+pct+'%</span></div>'
         + '</div>' + st + '</div>';
     }).join("");
     var hasErr = state.queue.some(function(i){return i.status==="err";});
     $("retryBtn").style.display = hasErr ? "" : "none";
+  }
+  function updateQueueProgress(item){
+    // Update only this file's bar / percentage in place, so a long video
+    // upload does not re-render (and flicker) the whole queue on every
+    // progress event. Falls back to a full render if the row is not there.
+    var idx = state.queue.indexOf(item);
+    if(idx < 0) return;
+    var pct = Math.round(item.progress||0);
+    var fill = document.querySelector('[data-q-fill="'+idx+'"]');
+    var pctEl = document.querySelector('[data-q-pct="'+idx+'"]');
+    var stEl = document.querySelector('[data-q-status="'+idx+'"]');
+    var ldEl = document.querySelector('[data-q-loaded="'+idx+'"]');
+    if(!fill && !pctEl){ renderQueue(); return; }
+    if(fill) fill.style.width = (item.progress||0) + "%";
+    if(pctEl) pctEl.textContent = pct + "%";
+    if(stEl && item.status==="up") stEl.textContent = "上傳中 " + pct + "%";
+    if(ldEl) ldEl.textContent = (item.total ? ' · 已傳 ' + formatBytes(item.loaded||0) + ' / ' + formatBytes(item.total) : '');
   }
   function uploadItem(item){
     if(!item.uploader){ item.status = "err"; renderQueue(); return; }
@@ -735,9 +806,10 @@
     fd.append("tags", LIST_TAG + ",day-" + day + "," + tagSlug(item.uploader));
     fd.append("context", "uploader=" + item.uploader + "|day=" + day);
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUD + "/image/upload", true);
+    // Videos must go to the Cloudinary video endpoint; photos to image.
+    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUD + "/" + (item.isVideo ? "video" : "image") + "/upload", true);
     xhr.upload.onprogress = function(e){
-      if(e.lengthComputable){ item.progress = (e.loaded/e.total)*100; renderQueue(); }
+      if(e.lengthComputable){ item.loaded = e.loaded; item.total = e.total; item.progress = (e.loaded/e.total)*100; updateQueueProgress(item); }
     };
     xhr.onload = function(){
       if(xhr.status >= 200 && xhr.status < 300){
@@ -750,10 +822,12 @@
           if(item.tagWarn) state.tagProblem = true;
           upsertPhoto({
             id: res.public_id,
-            url: resourceUrl(res),
+            url: resourceUrl(res, item.isVideo ? "video" : "image"),
             uploader: item.uploader,
             day: day,
-            ts: Date.now()
+            ts: Date.now(),
+            isVideo: !!item.isVideo,
+            duration: (res && typeof res.duration === "number") ? res.duration : null
           });
           renderGallery();
           // Re-check the shared list shortly after a successful upload
@@ -782,10 +856,13 @@
   // own file name — no "delete-" prefix, no timestamp — only the folder
   // differs (see markerPublicId below): original
   // phu-quoc/day-5/xmfk822i1skmhqaiazqe -> marker
-  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe; a cancellation marker
-  // is the same name plus "-cancel". So in the Cloudinary
-  // "phu-quoc-deleted" folder each marker is named after the photo it
-  // refers to. Markers written earlier into the old "phu-quoc-delete"
+  // phu-quoc/phu-quoc-deleted/Delete-xmfk822i1skmhqaiazqe; a
+  // cancellation marker is that name plus "-cancel"
+  // (Delete-xmfk822i1skmhqaiazqe-cancel). So in the Cloudinary
+  // "phu-quoc-deleted" folder each marker is clearly named
+  // Delete-[original file name] after the file it refers to. The
+  // upload also sends asset_folder=phu-quoc/phu-quoc-deleted, not
+  // just folder, so the backend really files it in that subfolder. Markers written earlier into the old "phu-quoc-delete"
   // folder are still read back the same way, because markers are read by
   // tag, not by folder. On every sync the page also
   // reads the marker tag list and, per original_id, the LATEST marker
@@ -822,20 +899,23 @@
     for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type:"image/png" });
   }
-  // Marker file name = the original photo's own file name, unchanged:
-  // no "delete-" prefix, no timestamp. The marker is uploaded into
-  // DELETE_FOLDER ("phu-quoc/phu-quoc-deleted"), so e.g. original
-  // phu-quoc/day-5/xmfk822i1skmhqaiazqe gets marker public_id
-  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe (status=requested).
-  // A cancellation marker is the same name plus "-cancel":
-  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe-cancel
-  // (status=cancelled). This returns just the file-name part; the upload
-  // passes it as public_id together with folder=DELETE_FOLDER.
+  // Marker file name = "Delete-" + the original file's own name:
+  // original xmfk822i1skmhqaiazqe -> marker Delete-xmfk822i1skmhqaiazqe.
+  // The marker is uploaded into DELETE_FOLDER
+  // ("phu-quoc/phu-quoc-deleted"), so its full public_id is
+  // phu-quoc/phu-quoc-deleted/Delete-xmfk822i1skmhqaiazqe
+  // (status=requested). A cancellation marker keeps the same format
+  // plus "-cancel": Delete-xmfk822i1skmhqaiazqe-cancel
+  // (status=cancelled). This returns just the file-name part; the
+  // upload passes it as public_id together with folder=DELETE_FOLDER
+  // AND asset_folder=DELETE_FOLDER (folder alone left asset_folder as
+  // "phu-quoc" in the backend, so markers looked like they sat in the
+  // same folder as the photos).
   function markerPublicId(id, status){
     var base = String(id || "").split("/").pop() || "";
     base = base.replace(/\.[a-z0-9]+$/i, "");
     if(!base) base = "photo";
-    return status === "cancelled" ? base + "-cancel" : base;
+    return status === "cancelled" ? "Delete-" + base + "-cancel" : "Delete-" + base;
   }
   function uploadDeleteMarker(id, status){
     state.deleteOptimistic[id] = { status:status, ts:Date.now() };
@@ -845,6 +925,7 @@
     fd.append("file", markerBlob(), markerName + ".png");
     fd.append("upload_preset", PRESET);
     fd.append("folder", DELETE_FOLDER);
+    fd.append("asset_folder", DELETE_FOLDER);
     fd.append("public_id", markerName);
     fd.append("tags", DELETE_TAG);
     fd.append("context", "original_id=" + id + "|status=" + status);
@@ -959,7 +1040,7 @@
         + '<div class="n-actions"><button type="button" class="btn btn-teal" id="syncRetryBtn">再試同步</button></div>';
     } else {
       n.className = "notice warn show";
-      n.innerHTML = '<p style="margin:0">暫時未載入到相簿內容，可能係網絡問題，頁面會每 30 秒自動再試。你仍然可以照常上傳相片。</p>'
+      n.innerHTML = '<p style="margin:0">暫時未載入到相簿內容，可能係網絡問題，頁面會每 30 秒自動再試。你仍然可以照常上傳相片／影片。</p>'
         + '<div class="n-actions"><button type="button" class="btn btn-teal" id="syncRetryBtn">再試同步</button></div>';
     }
     var btn = $("syncRetryBtn");
@@ -984,23 +1065,39 @@
       }
       return r.json();
     }).then(function(data){
+      // Videos live in a separate Cloudinary list (resource_type=video);
+      // fetch it too so uploaded videos appear alongside photos. A
+      // missing/empty video list (404 before the first video) is fine.
+      var videoUrl = "https://res.cloudinary.com/" + CLOUD + "/video/list/" + LIST_TAG + ".json?t=" + Date.now();
+      return fetch(videoUrl, { cache:"no-store" }).then(function(vr){
+        if(!vr.ok) return [];
+        return vr.json().then(function(vd){ return (vd && vd.resources) || []; }, function(){ return []; });
+      }).catch(function(){ return []; }).then(function(videoResources){
+        return { imageData: data, videoResources: videoResources };
+      });
+    }).then(function(bundle){
+      var data = bundle.imageData;
       var resources = (data && data.resources) || [];
       var seen = {};
       var merged = [];
-      resources.forEach(function(r){
+      function addResource(r, isVid){
         if(r.public_id && (String(r.public_id).indexOf(DELETE_FOLDER + "/") === 0 || String(r.public_id).indexOf(DELETE_FOLDER_OLD + "/") === 0)) return; // delete markers are records, not photos
         var day = dayFromTags(r.tags) || dayFromPublicId(r.public_id) || dayFromContext(r) || 1;
         var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || "未標示";
         var p = {
           id: r.public_id,
-          url: resourceUrl(r),
+          url: resourceUrl(r, isVid ? "video" : "image"),
           uploader: up,
           day: day,
-          ts: r.created_at ? new Date(r.created_at).getTime() : 0
+          ts: r.created_at ? new Date(r.created_at).getTime() : 0,
+          isVideo: !!isVid,
+          duration: (typeof r.duration === "number") ? r.duration : null
         };
         seen[p.id] = true;
         merged.push(p);
-      });
+      }
+      resources.forEach(function(r){ addResource(r, r.resource_type === "video"); });
+      (bundle.videoResources || []).forEach(function(r){ if(!seen[r.public_id]) addResource(r, true); });
       // Keep photos uploaded this session that the shared list has not caught up with yet
       state.photos.forEach(function(p){ if(!seen[p.id]) merged.push(p); });
       state.photos = merged;
@@ -1053,10 +1150,23 @@
   }
   function cardHtml(p){
     var d = dayInfo(p.day);
+    if(p.isVideo){
+      var dur = (typeof p.duration === "number" && p.duration > 0) ? ' · ' + Math.floor(p.duration/60) + ':' + ('0'+Math.floor(p.duration%60)).slice(-2) : '';
+      return '<button type="button" class="card" data-id="'+esc(p.id)+'" aria-label="'+esc(p.uploader)+' 喺 Day '+p.day+' 拍嘅影片，撳入去播放">'
+        + '<span class="thumb-wrap"><img loading="lazy" src="'+esc(thumbFor(p))+'" alt="'+esc(p.uploader)+' 喺 Day '+p.day+' 拍嘅影片縮圖">'
+        + '<span class="video-badge">🎬 影片</span><span class="play-badge" aria-hidden="true">▶</span></span>'
+        + '<span class="cap"><span class="who"><span class="avatar">'+esc(p.uploader.charAt(0))+'</span>'+esc(p.uploader)+'</span>'
+        + '<span class="when">Day '+p.day+' · '+d.label+'（'+d.wd+'）'+esc(dur)+'</span></span></button>';
+    }
     return '<button type="button" class="card" data-id="'+esc(p.id)+'">'
       + '<img loading="lazy" src="'+esc(thumb(p.url))+'" alt="'+esc(p.uploader)+' 喺 Day '+p.day+' 影嘅相">'
       + '<span class="cap"><span class="who"><span class="avatar">'+esc(p.uploader.charAt(0))+'</span>'+esc(p.uploader)+'</span>'
       + '<span class="when">Day '+p.day+' · '+d.label+'（'+d.wd+'）</span></span></button>';
+  }
+  function countLabel(list){
+    var vids = list.filter(function(x){ return x.isVideo; }).length;
+    if(!vids) return list.length + " 張";
+    return list.length + " 項（" + (list.length - vids) + " 張相 · " + vids + " 段片）";
   }
   function groupHtml(title, sub, photos){
     if(!photos.length) return "";
@@ -1072,7 +1182,7 @@
     // 「待刪除」 grouping, for the leader to act on.
     var all = total.filter(function(p){ return !isDeleteRequested(p.id); });
     $("statTotal").textContent = all.length;
-    $("galCount").textContent = all.length ? "共 " + all.length + " 張相" : "";
+    $("galCount").textContent = all.length ? "共 " + countLabel(all) : "";
     var box = $("gallery");
     state.lbList = all;
     renderDownloads(all);
@@ -1080,11 +1190,11 @@
       if(state.listRestricted){
         box.innerHTML = '<div class="empty"><div class="t">相已經上傳咗，但暫時讀唔返</div>Cloudinary 封鎖咗相簿清單讀取，相冇唔見到。請管理員跟上面紅框嘅步驟開返 Resource list，啲相就會自己出現返，唔使重新上傳。</div>';
       } else if(state.syncOk === false){
-        box.innerHTML = '<div class="empty"><div class="t">暫時載入唔到相簿</div>可能係網絡問題，頁面會每 30 秒自動再試；你仍然可以照常上傳相片。</div>';
+        box.innerHTML = '<div class="empty"><div class="t">暫時載入唔到相簿</div>可能係網絡問題，頁面會每 30 秒自動再試；你仍然可以照常上傳相片／影片。</div>';
       } else if(state.syncOk === null){
-        box.innerHTML = '<div class="empty"><div class="t">載入緊相簿…</div>同步緊大家上傳嘅相，請稍等。</div>';
+        box.innerHTML = '<div class="empty"><div class="t">載入緊相簿…</div>同步緊大家上傳嘅相／片，請稍等。</div>';
       } else {
-        box.innerHTML = '<div class="empty"><div class="t">相簿暫時未有相</div>第一個上傳嘅人，就係開齋嗰個喇 — 去上面揀返自己個名，揀相上傳啦。</div>';
+        box.innerHTML = '<div class="empty"><div class="t">相簿暫時未有相／片</div>第一個上傳嘅人，就係開齋嗰個喇 — 去上面揀返自己個名，揀相或片上傳啦。</div>';
       }
       return;
     }
@@ -1094,15 +1204,15 @@
     } else if(state.view==="day"){
       DAYS.forEach(function(d){
         var ps = all.filter(function(p){return p.day===d.n;});
-        if(ps.length) html += groupHtml("Day " + d.n + " · " + d.label + "（" + d.wd + "）", ps.length + " 張", ps);
+        if(ps.length) html += groupHtml("Day " + d.n + " · " + d.label + "（" + d.wd + "）", countLabel(ps), ps);
       });
     } else {
       MEMBERS.forEach(function(m){
         var ps = all.filter(function(p){return p.uploader===m;});
-        if(ps.length) html += groupHtml(m + (m===LEADER ? "（團主）" : ""), ps.length + " 張", ps);
+        if(ps.length) html += groupHtml(m + (m===LEADER ? "（團主）" : ""), countLabel(ps), ps);
       });
       var rest = all.filter(function(p){ return MEMBERS.indexOf(p.uploader) < 0; });
-      if(rest.length) html += groupHtml("未標示上傳者", rest.length + " 張", rest);
+      if(rest.length) html += groupHtml("未標示上傳者", countLabel(rest), rest);
     }
     box.innerHTML = html;
     var cards = box.querySelectorAll(".card");
@@ -1122,7 +1232,7 @@
         var card = this.closest ? this.closest(".card") : null;
         var id2 = card ? card.getAttribute("data-id") : null;
         for(var m=0;m<state.lbList.length;m++){
-          if(state.lbList[m].id===id2 && state.lbList[m].url && this.src !== state.lbList[m].url){
+          if(state.lbList[m].id===id2 && !state.lbList[m].isVideo && state.lbList[m].url && this.src !== state.lbList[m].url){
             this.src = state.lbList[m].url;
           }
         }
@@ -1138,7 +1248,7 @@
   }
   function dlBtnHtml(label, count, kind, key, extraClass){
     var pressed = dlIsSelected(kind, key) ? "true" : "false";
-    return '<button type="button" class="dl-btn '+(extraClass||'')+'" data-dl-kind="'+kind+'" data-dl-key="'+esc(key)+'" aria-pressed="'+pressed+'"'+(count ? '' : ' disabled')+'>⬇ '+esc(label)+'<span class="n">'+count+' 張</span></button>';
+    return '<button type="button" class="dl-btn '+(extraClass||'')+'" data-dl-kind="'+kind+'" data-dl-key="'+esc(key)+'" aria-pressed="'+pressed+'"'+(count ? '' : ' disabled')+'>⬇ '+esc(label)+'<span class="n">'+count+' 項</span></button>';
   }
   function updateDlConfirm(){
     var btn = $("dlConfirmBtn"), label = $("dlSelected");
@@ -1147,7 +1257,7 @@
       var g = groupPhotos(dlSelection.kind, dlSelection.key);
       if(!g.photos.length){ dlSelection = null; }
       else {
-        label.innerHTML = "已揀：<b>" + esc(g.label) + "</b>（" + g.photos.length + " 張）- 撳「確定」先開始打包下載。";
+        label.innerHTML = "已揀：<b>" + esc(g.label) + "</b>（" + countLabel(g.photos) + "）- 撳「確定」先開始打包下載。";
         btn.disabled = dlBusy;
         return;
       }
@@ -1165,7 +1275,7 @@
   function renderDownloads(visible){
     if(!$("dlAll")) return;
     var all = visible || sortedPhotos().filter(function(p){ return !isDeleteRequested(p.id); });
-    $("dlAll").innerHTML = dlBtnHtml("全部相片", all.length, "all", "all", "all-btn");
+    $("dlAll").innerHTML = dlBtnHtml("全部相片／影片", all.length, "all", "all", "all-btn");
     var peopleHtml = "";
     MEMBERS.forEach(function(m){
       var n = all.filter(function(p){ return p.uploader===m; }).length;
@@ -1200,7 +1310,7 @@
       var n = parseInt(key,10);
       return { label:"Day " + n + " · " + dayInfo(n).label, file:"phu-quoc-day-" + n, photos:all.filter(function(p){ return p.day===n; }) };
     }
-    return { label:"全部相片", file:"phu-quoc-all", photos:all };
+    return { label:"全部相片／影片", file:"phu-quoc-all", photos:all };
   }
   function extOf(url){
     var m = /\.([a-z0-9]{3,4})(?:[?#]|$)/i.exec(url || "");
@@ -1218,7 +1328,7 @@
     if(!g.photos.length) return;
     dlBusy = true;
     updateDlConfirm();
-    setDlStatus("準備緊「" + g.label + "」…（共 " + g.photos.length + " 張）");
+    setDlStatus("準備緊「" + g.label + "」…（共 " + countLabel(g.photos) + "）");
     if(window.JSZip){
       downloadAsZip(g).then(function(){ dlBusy = false; updateDlConfirm(); }, function(){ dlBusy = false; updateDlConfirm(); });
     } else {
@@ -1244,7 +1354,7 @@
           zip.file("Day" + p.day + "-" + p.uploader + "-" + num + extOf(p.url), blob);
           done++;
         }).catch(function(){ failed++; }).then(function(){
-          setDlStatus("下載緊「" + g.label + "」… " + (done + failed) + " / " + g.photos.length + " 張");
+          setDlStatus("下載緊「" + g.label + "」… " + (done + failed) + " / " + g.photos.length + " 項");
         });
       });
     });
@@ -1261,7 +1371,7 @@
         document.body.appendChild(a);
         a.click();
         setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-        setDlStatus("✓ 已下載「" + g.label + "」" + done + " 張" + (failed ? "（有 " + failed + " 張下載唔到，已跳過）" : "") + "。", failed ? "" : "ok");
+        setDlStatus("✓ 已下載「" + g.label + "」" + done + " 項" + (failed ? "（有 " + failed + " 項下載唔到，已跳過）" : "") + "。", failed ? "" : "ok");
       });
     }).catch(function(){
       setDlStatus("打包失敗，請再試一次。", "err");
@@ -1271,13 +1381,13 @@
     var i = 0;
     function next(){
       if(i >= g.photos.length){
-        setDlStatus("✓ 已逐張下載「" + g.label + "」共 " + g.photos.length + " 張。", "ok");
+        setDlStatus("✓ 已逐個下載「" + g.label + "」共 " + g.photos.length + " 項。", "ok");
         dlBusy = false;
         updateDlConfirm();
         return;
       }
       var p = g.photos[i++];
-      setDlStatus("逐張下載緊「" + g.label + "」… " + i + " / " + g.photos.length + " 張（瀏覽器可能會問允唔允許一次下載多個檔案）");
+      setDlStatus("逐個下載緊「" + g.label + "」… " + i + " / " + g.photos.length + " 項（瀏覽器可能會問允唔允許一次下載多個檔案）");
       var a = document.createElement("a");
       a.href = downloadUrl(p.url);
       a.target = "_blank";
@@ -1298,6 +1408,8 @@
     document.body.style.overflow = "hidden";
   }
   function closeLb(){
+    var vidEl = $("lbVideo");
+    if(vidEl){ try{ vidEl.pause(); }catch(e){} }
     $("lightbox").classList.remove("open");
     document.body.style.overflow = "";
   }
@@ -1305,10 +1417,21 @@
     var p = state.lbList[state.lbIdx];
     if(!p) return;
     var d = dayInfo(p.day);
-    $("lbImg").src = p.url;
-    $("lbImg").alt = p.uploader + " 喺 Day " + p.day + " 影嘅相";
+    var imgEl = $("lbImg"), vidEl = $("lbVideo");
+    if(p.isVideo){
+      imgEl.style.display = "none";
+      imgEl.removeAttribute("src");
+      vidEl.style.display = "";
+      vidEl.poster = videoPoster(p.url);
+      if(vidEl.getAttribute("src") !== p.url){ vidEl.src = p.url; }
+    } else {
+      if(vidEl){ try{ vidEl.pause(); }catch(e){} vidEl.style.display = "none"; vidEl.removeAttribute("src"); if(vidEl.load) vidEl.load(); }
+      imgEl.style.display = "";
+      imgEl.src = p.url;
+      imgEl.alt = p.uploader + " 喺 Day " + p.day + " 影嘅相";
+    }
     $("lbTitle").textContent = p.uploader + (p.uploader===LEADER ? "（團主）" : "");
-    $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + " 張";
+    $("lbSub").textContent = "Day " + p.day + " · " + d.label + "（星期" + d.wd + "） · 第 " + (state.lbIdx+1) + " / " + state.lbList.length + (p.isVideo ? " 段（影片）" : " 張");
     $("lbDownload").href = downloadUrl(p.url);
     var delBtn = $("lbDeleteBtn");
     delBtn.disabled = false;
