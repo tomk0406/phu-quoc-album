@@ -440,7 +440,8 @@
   var PRESET = "phu-quoc-upload";
   var FOLDER = "phu-quoc";
   var LIST_TAG = "phu-quoc-album";
-  var DELETE_FOLDER = "phu-quoc-delete";
+  var DELETE_FOLDER = "phu-quoc/phu-quoc-deleted";
+  var DELETE_FOLDER_OLD = "phu-quoc-delete"; // legacy marker folder: its markers are still read back by tag
   var DELETE_TAG = "phu-quoc-album-delete";
   var SYNC_MS = 30000;
 
@@ -773,14 +774,20 @@
 
   /* ===== Delete requests (record only — nothing is deleted here) ===== */
   // Shared record, no API secret: pressing "要求刪除" uploads a tiny marker
-  // image through the same unsigned preset into folder "phu-quoc-delete",
-  // tagged "phu-quoc-album-delete", with context original_id=<photo public_id>
-  // and status=requested. Cancelling (from the internal version) uploads
-  // another marker with status=cancelled. Marker public_ids are readable,
-  // never random: delete-day<day>-<first 9 chars of original id>-<timestamp>
-  // for a request, cancel-day<day>-<first 9 chars of original id>-<timestamp>
-  // for a cancellation (see markerPublicId below), so the leader can spot
-  // which photo each marker in the Cloudinary folder refers to. On every sync the page also
+  // image through the same unsigned preset into folder
+  // "phu-quoc/phu-quoc-deleted", tagged "phu-quoc-album-delete", with
+  // context original_id=<photo public_id> and status=requested. Cancelling
+  // (from the internal version) uploads another marker with
+  // status=cancelled. A marker's file name is exactly the original photo's
+  // own file name — no "delete-" prefix, no timestamp — only the folder
+  // differs (see markerPublicId below): original
+  // phu-quoc/day-5/xmfk822i1skmhqaiazqe -> marker
+  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe; a cancellation marker
+  // is the same name plus "-cancel". So in the Cloudinary
+  // "phu-quoc-deleted" folder each marker is named after the photo it
+  // refers to. Markers written earlier into the old "phu-quoc-delete"
+  // folder are still read back the same way, because markers are read by
+  // tag, not by folder. On every sync the page also
   // reads the marker tag list and, per original_id, the LATEST marker
   // wins: requested -> in this public version the photo is hidden
   // completely for everyone after a refresh (only the internal version
@@ -815,24 +822,20 @@
     for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type:"image/png" });
   }
-  // Readable marker name, so the leader can tell at a glance in the
-  // Cloudinary "phu-quoc-delete" folder which photo a marker belongs to:
-  //   delete-day2-jchemknef-1763800000000   (status=requested)
-  //   cancel-day2-jchemknef-1763800000000   (status=cancelled)
-  // i.e. <delete|cancel>-day<original photo's day>-<first 9 chars of the
-  // original photo's own id>-<timestamp>. No random Cloudinary name.
+  // Marker file name = the original photo's own file name, unchanged:
+  // no "delete-" prefix, no timestamp. The marker is uploaded into
+  // DELETE_FOLDER ("phu-quoc/phu-quoc-deleted"), so e.g. original
+  // phu-quoc/day-5/xmfk822i1skmhqaiazqe gets marker public_id
+  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe (status=requested).
+  // A cancellation marker is the same name plus "-cancel":
+  // phu-quoc/phu-quoc-deleted/xmfk822i1skmhqaiazqe-cancel
+  // (status=cancelled). This returns just the file-name part; the upload
+  // passes it as public_id together with folder=DELETE_FOLDER.
   function markerPublicId(id, status){
-    var day = null;
-    for(var i=0;i<state.photos.length;i++){
-      if(state.photos[i].id === id && state.photos[i].day){ day = state.photos[i].day; break; }
-    }
-    if(!day) day = dayFromPublicId(id);
     var base = String(id || "").split("/").pop() || "";
     base = base.replace(/\.[a-z0-9]+$/i, "");
-    var shortId = base.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 9) || "photo";
-    var prefix = status === "cancelled" ? "cancel" : "delete";
-    var dayPart = day ? "day" + day : "dayx";
-    return prefix + "-" + dayPart + "-" + shortId + "-" + Date.now();
+    if(!base) base = "photo";
+    return status === "cancelled" ? base + "-cancel" : base;
   }
   function uploadDeleteMarker(id, status){
     state.deleteOptimistic[id] = { status:status, ts:Date.now() };
@@ -985,7 +988,7 @@
       var seen = {};
       var merged = [];
       resources.forEach(function(r){
-        if(r.public_id && String(r.public_id).indexOf(DELETE_FOLDER + "/") === 0) return; // delete markers are records, not photos
+        if(r.public_id && (String(r.public_id).indexOf(DELETE_FOLDER + "/") === 0 || String(r.public_id).indexOf(DELETE_FOLDER_OLD + "/") === 0)) return; // delete markers are records, not photos
         var day = dayFromTags(r.tags) || dayFromPublicId(r.public_id) || dayFromContext(r) || 1;
         var up = uploaderFromTags(r.tags) || uploaderFromContext(r) || "未標示";
         var p = {
