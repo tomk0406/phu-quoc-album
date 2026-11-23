@@ -352,7 +352,7 @@
       <div class="step-label" style="margin-top:24px"><span class="step-n">2</span>揀相／片，一次過揀多個檔案都得</div>
       <div class="drop" id="dropZone">
         <div class="big">📸🎬 將相片／影片放喺呢度，或者撳下面個掣揀檔案</div>
-        <div class="small">手機、相機原圖同影片（MP4／MOV 等）都得 · 相片會讀拍攝日期，影片會用檔案日期，自動分入 Day 1 至 Day 5 · 影片較大，上傳需時，請睇住每個檔案嘅進度條</div>
+        <div class="small">手機、相機原圖同影片（MP4／MOV 等）都得 · 相片會讀拍攝日期，影片會用檔案日期，自動分入 Day 1 至 Day 5 · 可以一次過揀多條片，系統會逐條排隊上傳；大檔案會自動分段上傳，唔會因為太大而失敗，請睇住每個檔案嘅進度條</div>
         <button type="button" class="btn btn-primary" id="pickBtn" disabled>揀相／片上傳</button>
         <input type="file" id="fileInput" accept="image/*,video/*,.mov,.mp4,.m4v,.webm,.avi" multiple class="sr" aria-label="揀相片或影片上傳">
       </div>
@@ -723,15 +723,16 @@
     $("queue").classList.add("show");
     files.forEach(function(file){
       var isVid = isVideoFile(file);
-      var item = { file:file, uploader:state.uploader, day:null, dateLabel: isVid ? "讀緊檔案日期…" : "讀緊拍攝日期…", status:"wait", progress:0, loaded:0, total:file.size||0, isVideo:isVid, id:null };
+      var item = { file:file, uploader:state.uploader, day:null, dateLabel: isVid ? "讀緊檔案日期…" : "讀緊拍攝日期…", status:"wait", progress:0, loaded:0, total:file.size||0, isVideo:isVid, id:null, ready:false };
       state.queue.push(item);
       if(isVid){
         // Videos carry no JPEG EXIF: file date decides the Day.
         var usedV = file.lastModified ? new Date(file.lastModified) : new Date();
         item.day = dayFromDate(usedV) || 1;
         item.dateLabel = "檔案日期：" + usedV.getFullYear() + "年" + (usedV.getMonth()+1) + "月" + usedV.getDate() + "日";
+        item.ready = true;
         renderQueue();
-        uploadItem(item);
+        pumpQueue();
         return;
       }
       readExifDate(file).then(function(exifDate){
@@ -740,8 +741,9 @@
         if(!used){ used = file.lastModified ? new Date(file.lastModified) : new Date(); src = "檔案日期"; }
         item.day = dayFromDate(used) || 1;
         item.dateLabel = src + "：" + used.getFullYear() + "年" + (used.getMonth()+1) + "月" + used.getDate() + "日";
+        item.ready = true;
         renderQueue();
-        uploadItem(item);
+        pumpQueue();
       });
     });
     renderQueue();
@@ -753,7 +755,8 @@
       var st = it.status==="ok" ? '<span class="q-status ok" data-q-status="'+idx+'">✓ 完成 100%</span>'
         : it.status==="err" ? '<span class="q-status err" data-q-status="'+idx+'">失敗 '+pct+'%</span>'
         : it.status==="up" ? '<span class="q-status up" data-q-status="'+idx+'">上傳中 '+pct+'%</span>'
-        : '<span class="q-status" data-q-status="'+idx+'">等候中 0%</span>';
+        : it.status==="retry" ? '<span class="q-status up" data-q-status="'+idx+'">等候自動重試 '+pct+'%</span>'
+        : '<span class="q-status" data-q-status="'+idx+'">排隊中 0%</span>';
       var dayBadge = it.day ? '<span class="q-day">Day '+it.day+'</span>' : '';
       var kindLabel = it.isVideo ? '🎬 影片' : '📷 相片';
       var sizeTxt = formatBytes(it.file && it.file.size);
@@ -766,12 +769,15 @@
       var tagWarn = (it.status==="ok" && it.tagWarn)
         ? '<div class="q-sub" style="color:var(--coral);font-weight:700">⚠ 上傳成功，但 Cloudinary 回覆入面冇相簿標籤，重載後可能讀唔返。請管理員檢查上傳預設（Upload preset）係咪容許加入標籤（tags）。</div>'
         : '';
+      var errNote = it.status==="err"
+        ? '<div class="q-sub" style="color:var(--coral);font-weight:700">⚠ 呢個檔案上傳唔到。撳下面「重試失敗嘅檔案」，會逐個排隊重新上傳；大影片會自動分段傳，唔使自己再揀過個檔案。</div>'
+        : '';
       var barColor = it.status==="err" ? 'background:var(--coral)' : (it.status==="ok" ? 'background:var(--ok)' : '');
       return '<div class="q-item">'
         + thumbHtml
         + '<div class="q-meta"><div class="q-name">'+esc(it.file.name||(it.isVideo?"影片":"相片"))+'</div>'
         + '<div class="q-sub">'+dayBadge+esc(kindLabel)+' · '+esc(it.dateLabel)+' · '+esc(it.uploader || "未揀人")+(sizeTxt?' · '+esc(sizeTxt):'')+'<span data-q-loaded="'+idx+'">'+esc(loadedTxt)+'</span></div>'
-        + tagWarn
+        + tagWarn + errNote
         + '<div class="q-prog"><div class="bar"><i data-q-fill="'+idx+'" style="width:'+(it.progress||0)+'%;'+barColor+'"></i></div><span class="q-pct" data-q-pct="'+idx+'">'+pct+'%</span></div>'
         + '</div>' + st + '</div>';
     }).join("");
@@ -793,51 +799,183 @@
     if(fill) fill.style.width = (item.progress||0) + "%";
     if(pctEl) pctEl.textContent = pct + "%";
     if(stEl && item.status==="up") stEl.textContent = "上傳中 " + pct + "%";
-    if(ldEl) ldEl.textContent = (item.total ? ' · 已傳 ' + formatBytes(item.loaded||0) + ' / ' + formatBytes(item.total) : '');
+    if(ldEl) ldEl.textContent = (item.total ? ' · 已傳 ' + formatBytes(item.loaded||0) + ' / ' + formatBytes(item.total) + (item.chunkCount > 1 ? ' · 分段 ' + (item.chunkIndex||1) + '/' + item.chunkCount : '') : '');
   }
-  function uploadItem(item){
-    if(!item.uploader){ item.status = "err"; renderQueue(); return; }
-    item.status = "up"; item.progress = 0; renderQueue();
-    var day = item.day || 1;
+  /* ===== Upload engine: one file at a time, chunked for large files =====
+     Bug history (fixed here): addFiles used to fire uploadItem for EVERY
+     selected file at once. Several large videos uploading in parallel
+     saturated the connection and hit Cloudinary throttling, so all but
+     (sometimes) the first failed immediately — the queue never waited.
+     Large videos also went as ONE single POST: a phone original of a few
+     hundred MB regularly dies mid-request, and the old retry button then
+     blasted every failed file in parallel again with the same single
+     POST, so a retry of an oversized video failed deterministically,
+     forever. Now: files upload strictly one at a time via pumpQueue;
+     files over CHUNK_THRESHOLD go up in sequential Cloudinary chunks
+     (Content-Range + X-Unique-Upload-Id), each chunk retried on its own;
+     transient failures retry automatically with a pause; the manual
+     retry button re-queues failed files one at a time instead of all
+     at once. */
+  var CHUNK_SIZE = 10 * 1024 * 1024;       // 10 MB per chunk (Cloudinary minimum chunk is 5 MB)
+  var CHUNK_THRESHOLD = 20 * 1024 * 1024;  // files bigger than this upload in chunks
+  var MAX_ATTEMPTS = 3;
+  var uploadBusy = false;
+
+  function pumpQueue(){
+    if(uploadBusy) return;
+    var next = null;
+    for(var i=0;i<state.queue.length;i++){
+      if(state.queue[i].status==="wait" && state.queue[i].ready){ next = state.queue[i]; break; }
+    }
+    if(!next) return;
+    uploadBusy = true;
+    uploadItem(next, function(){
+      uploadBusy = false;
+      pumpQueue();
+    });
+  }
+  function uploadEndpoint(item){
+    // Videos must go to the Cloudinary video endpoint; photos to image.
+    return "https://api.cloudinary.com/v1_1/" + CLOUD + "/" + (item.isVideo ? "video" : "image") + "/upload";
+  }
+  function uploadForm(item, day){
     var fd = new FormData();
-    fd.append("file", item.file);
     fd.append("upload_preset", PRESET);
     fd.append("folder", FOLDER + "/day-" + day);
     fd.append("tags", LIST_TAG + ",day-" + day + "," + tagSlug(item.uploader));
     fd.append("context", "uploader=" + item.uploader + "|day=" + day);
-    var xhr = new XMLHttpRequest();
-    // Videos must go to the Cloudinary video endpoint; photos to image.
-    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUD + "/" + (item.isVideo ? "video" : "image") + "/upload", true);
-    xhr.upload.onprogress = function(e){
-      if(e.lengthComputable){ item.loaded = e.loaded; item.total = e.total; item.progress = (e.loaded/e.total)*100; updateQueueProgress(item); }
-    };
-    xhr.onload = function(){
-      if(xhr.status >= 200 && xhr.status < 300){
-        try{
-          var res = JSON.parse(xhr.responseText);
-          item.status = "ok"; item.progress = 100; item.id = res.public_id;
-          // The shared list is keyed by tag: if Cloudinary did not keep the
-          // album tag on this upload, the photo can never come back on reload.
-          item.tagWarn = !(res.tags && res.tags.indexOf(LIST_TAG) >= 0);
-          if(item.tagWarn) state.tagProblem = true;
-          upsertPhoto({
-            id: res.public_id,
-            url: resourceUrl(res, item.isVideo ? "video" : "image"),
-            uploader: item.uploader,
-            day: day,
-            ts: Date.now(),
-            isVideo: !!item.isVideo,
-            duration: (res && typeof res.duration === "number") ? res.duration : null
-          });
-          renderGallery();
-          // Re-check the shared list shortly after a successful upload
-          setTimeout(function(){ fetchAlbum(false); }, 5000);
-        }catch(e){ item.status = "err"; }
-      } else { item.status = "err"; }
+    return fd;
+  }
+  function handleUploadSuccess(item, day, res){
+    item.status = "ok"; item.progress = 100; item.loaded = item.total; item.id = res.public_id;
+    // The shared list is keyed by tag: if Cloudinary did not keep the
+    // album tag on this upload, the photo can never come back on reload.
+    item.tagWarn = !(res.tags && res.tags.indexOf(LIST_TAG) >= 0);
+    if(item.tagWarn) state.tagProblem = true;
+    upsertPhoto({
+      id: res.public_id,
+      url: resourceUrl(res, item.isVideo ? "video" : "image"),
+      uploader: item.uploader,
+      day: day,
+      ts: Date.now(),
+      isVideo: !!item.isVideo,
+      duration: (res && typeof res.duration === "number") ? res.duration : null
+    });
+    renderGallery();
+    // Re-check the shared list shortly after a successful upload
+    setTimeout(function(){ fetchAlbum(false); }, 5000);
+  }
+  function isRetryableStatus(code){ return code===0 || code===408 || code===429 || code>=500; }
+
+  function uploadItem(item, done){
+    var finished = false;
+    function finish(){
+      if(finished) return;
+      finished = true;
       renderQueue();
-    };
-    xhr.onerror = function(){ item.status = "err"; renderQueue(); };
-    xhr.send(fd);
+      if(done) done();
+    }
+    if(!item.uploader){ item.status = "err"; finish(); return; }
+    var day = item.day || 1;
+    item.chunkCount = 0; item.chunkIndex = 0;
+    if(item.file && item.file.size > CHUNK_THRESHOLD) uploadChunked(item, day, finish);
+    else uploadSingle(item, day, finish);
+  }
+
+  function uploadSingle(item, day, finish){
+    var attempt = 0;
+    function tryOnce(){
+      attempt++;
+      item.status = "up"; item.progress = 0; item.loaded = 0; renderQueue();
+      var fd = uploadForm(item, day);
+      fd.append("file", item.file);
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadEndpoint(item), true);
+      xhr.upload.onprogress = function(e){
+        if(e.lengthComputable){ item.loaded = e.loaded; item.total = e.total; item.progress = (e.loaded/e.total)*100; updateQueueProgress(item); }
+      };
+      xhr.onload = function(){
+        if(xhr.status >= 200 && xhr.status < 300){
+          try{
+            handleUploadSuccess(item, day, JSON.parse(xhr.responseText));
+          }catch(e){ item.status = "err"; }
+          finish();
+        } else if(isRetryableStatus(xhr.status) && attempt < MAX_ATTEMPTS){
+          waitRetry(tryOnce);
+        } else { item.status = "err"; finish(); }
+      };
+      xhr.onerror = function(){
+        if(attempt < MAX_ATTEMPTS) waitRetry(tryOnce);
+        else { item.status = "err"; finish(); }
+      };
+      xhr.ontimeout = function(){
+        if(attempt < MAX_ATTEMPTS) waitRetry(tryOnce);
+        else { item.status = "err"; finish(); }
+      };
+      xhr.send(fd);
+    }
+    function waitRetry(next){
+      item.status = "retry"; renderQueue();
+      setTimeout(next, 2500 * attempt);
+    }
+    tryOnce();
+  }
+
+  function uploadChunked(item, day, finish){
+    var file = item.file;
+    var total = file.size;
+    var uploadId = "pq" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    item.status = "up"; item.progress = 0; item.loaded = 0; item.total = total;
+    item.chunkCount = Math.ceil(total / CHUNK_SIZE); item.chunkIndex = 1;
+    renderQueue();
+    var offset = 0;
+    function sendChunk(){
+      var start = offset;
+      var end = Math.min(start + CHUNK_SIZE, total); // exclusive
+      item.chunkIndex = Math.floor(start / CHUNK_SIZE) + 1;
+      var blob = file.slice(start, end);
+      var attempt = 0;
+      function tryChunk(){
+        attempt++;
+        var fd = uploadForm(item, day);
+        fd.append("file", blob, file.name || (item.isVideo ? "video.mp4" : "photo.jpg"));
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", uploadEndpoint(item), true);
+        xhr.setRequestHeader("X-Unique-Upload-Id", uploadId);
+        xhr.setRequestHeader("Content-Range", "bytes " + start + "-" + (end - 1) + "/" + total);
+        xhr.upload.onprogress = function(e){
+          if(e.lengthComputable){ item.loaded = start + e.loaded; item.total = total; item.progress = (item.loaded/total)*100; updateQueueProgress(item); }
+        };
+        xhr.onload = function(){
+          if(xhr.status >= 200 && xhr.status < 300){
+            item.loaded = end; item.progress = (end/total)*100; updateQueueProgress(item);
+            if(end < total){ offset = end; sendChunk(); return; }
+            // Final chunk: its response is the normal upload response.
+            try{
+              handleUploadSuccess(item, day, JSON.parse(xhr.responseText));
+            }catch(e){ item.status = "err"; }
+            finish();
+          } else if(isRetryableStatus(xhr.status) && attempt < MAX_ATTEMPTS){
+            waitRetry(tryChunk);
+          } else { item.status = "err"; finish(); }
+        };
+        xhr.onerror = function(){
+          if(attempt < MAX_ATTEMPTS) waitRetry(tryChunk);
+          else { item.status = "err"; finish(); }
+        };
+        xhr.ontimeout = function(){
+          if(attempt < MAX_ATTEMPTS) waitRetry(tryChunk);
+          else { item.status = "err"; finish(); }
+        };
+        xhr.send(fd);
+      }
+      function waitRetry(next){
+        item.status = "retry"; renderQueue();
+        setTimeout(function(){ item.status = "up"; next(); }, 2000 * attempt);
+      }
+      tryChunk();
+    }
+    sendChunk();
   }
   function upsertPhoto(p){
     for(var i=0;i<state.photos.length;i++){
@@ -1561,10 +1699,17 @@
     });
 
     $("retryBtn").addEventListener("click", function(){
-      state.queue.filter(function(i){return i.status==="err";}).forEach(uploadItem);
+      // Re-queue failed files and let the pump upload them ONE at a time.
+      // (The old handler fired uploadItem for every failed file at once,
+      // recreating the parallel-upload failure it was meant to fix.)
+      state.queue.forEach(function(i){
+        if(i.status==="err"){ i.status = "wait"; i.ready = true; i.progress = 0; i.loaded = 0; }
+      });
+      renderQueue();
+      pumpQueue();
     });
     $("clearQueueBtn").addEventListener("click", function(){
-      state.queue = state.queue.filter(function(i){return i.status==="up";});
+      state.queue = state.queue.filter(function(i){return i.status==="up" || i.status==="retry";});
       if(!state.queue.length) $("queue").classList.remove("show");
       renderQueue();
     });
